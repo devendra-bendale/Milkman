@@ -1,0 +1,20 @@
+﻿@page "/customers"
+@using Microsoft.AspNetCore.Authorization
+@using Milkman2.Features.Customers.Components
+@attribute [Authorize]
+
+<SectionContent SectionName="pageTitle">
+    Customers
+</SectionContent>
+
+<AddCustomer OnCustomerAdded="HandleCustomerAdded"></AddCustomer>
+<hr />
+<ListCustomer @ref="listCustomerComponent"></ListCustomer>
+@code {
+    private ListCustomer? listCustomerComponent;
+
+    private async Task HandleCustomerAdded()
+    {
+        await listCustomerComponent!.LoadAsync();        
+    }
+}

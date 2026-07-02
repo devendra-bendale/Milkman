@@ -1,0 +1,114 @@
+﻿@inject ReportService ReportService
+
+<div class="card mb-3 p-3">
+    <div class="mb-2">
+        <label>Start Date</label>
+        <InputDate class="form-control" @bind-Value="startDate" />
+    </div>
+    <div class="mb-2">
+        <label>End Date</label>
+        <InputDate class="form-control" @bind-Value="endDate" />
+    </div>
+    <button class="btn btn-primary" type="submit" @onclick="GetReport">Get Report</button>
+    <br />
+    <div class="mb-3">
+        <input class="form-control"
+               placeholder="Search by name..."
+               value="@searchText"
+               @oninput="OnSearchInput" />
+    </div>
+</div>
+@foreach (var supplier in FilteredSuppliers)
+{
+    <div class="card shadow-sm border-0 rounded-4 mb-3">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">@supplier.SupplierName</h5>
+        </div>
+        <div class="card-body">
+            @foreach (var item in supplier.SupplierOrderDetails)
+            {
+                if (item.Quantity > 0)
+                {
+                    <div class="border-bottom pb-2 mb-2">
+                        <div class="d-flex justify-content-between">
+                            <span>@item.Date</span>
+                            <span>@item.MilkTypeName</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Fats</span>
+                            <span>@item.Fats.ToString("0.00")</span>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <span>Quantity</span>
+                            <span>@item.Quantity.ToString("0.00") Ltr</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Amount</span>
+                            <span>₹ @item.Amount.ToString("0.00")</span>
+                        </div>
+                    </div>
+                }
+            }
+            <div class="fw-bold text-primary">
+                <div class="d-flex justify-content-between">
+                    <span>Fats</span>
+                    <span>@supplier.TotalFats.ToString("0.00")</span>
+                </div>
+                <div class="d-flex justify-content-between mt-1">
+                    <span>Quantity</span>
+                    <span>@supplier.TotalQuantity.ToString("0.00") Ltr</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Amount</span>
+                    <span>₹ @supplier.TotalAmount.ToString("0.00")</span>
+                </div>
+            </div>
+            @* Daily records displayed as rows of up to 7 records each *@
+        </div>
+    </div>
+}
+
+@code {
+    private DateOnly startDate = DateOnly.FromDateTime(
+        new DateTime(
+            DateTime.Today.Year,
+            DateTime.Today.Month,
+            1)
+        .AddMonths(-1));
+
+    private DateOnly endDate = DateOnly.FromDateTime(
+        new DateTime(
+            DateTime.Today.Year,
+            DateTime.Today.Month,
+            1)
+        .AddDays(-1));
+
+    private string searchText = string.Empty;
+    private List<SupplierMasterReportViewModel> supplierMasterReportViewModels = new List<SupplierMasterReportViewModel>();
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        searchText = e?.Value?.ToString() ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private async Task GetReport()
+    {
+        supplierMasterReportViewModels = await ReportService.GetSupplierMasterReportAsync(startDate, endDate);
+        StateHasChanged();
+    }
+
+    private IEnumerable<SupplierMasterReportViewModel> FilteredSuppliers
+    {
+        get
+        {
+            var q = (searchText ?? string.Empty).Trim();
+
+            if (string.IsNullOrWhiteSpace(q))
+                return supplierMasterReportViewModels;
+
+            return supplierMasterReportViewModels.Where(c =>
+                (!string.IsNullOrEmpty(c.SupplierName) && c.SupplierName.Contains(q, StringComparison.OrdinalIgnoreCase)));
+        }
+    }
+}

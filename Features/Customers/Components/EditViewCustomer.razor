@@ -1,0 +1,126 @@
+﻿@inject NavigationManager navManager
+
+<div class="card-body">
+
+    @if (isEditing)
+    {
+        <div class="input-group input-group-sm mb-3">
+            <span class="input-group-text" id="inputGroup-sizing-default">Name</span>
+            <InputText class="form-control" @bind-Value="editModel.Name" aria-describedby="inputGroup-sizing-default" />
+        </div>
+
+        <div class="input-group input-group-sm mb-3">
+            <span class="input-group-text" id="inputGroup-sizing-default">Contact</span>
+            <InputText class="form-control" @bind-Value="editModel.ContactNumber" aria-describedby="inputGroup-sizing-default" />
+        </div>
+
+        <div class="input-group input-group-sm mb-3">
+            <span class="input-group-text" id="inputGroup-sizing-default">Address</span>
+            <InputText class="form-control" @bind-Value="editModel.Address" aria-describedby="inputGroup-sizing-default" />
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-success flex-fill" @onclick="SaveEditAsync">
+                Save
+            </button>
+
+            <button type="button" class="btn btn-secondary flex-fill" @onclick="CancelEdit">
+                Cancel
+            </button>
+        </div>
+    }
+    else
+    {
+        <h5 class="card-title mb-3">
+            @Customer?.Name
+        </h5>
+
+        <div class="mb-2">
+            <strong>📞 Contact</strong> : @Customer?.ContactNumber
+        </div>
+
+        <div class="mb-3">
+            <strong>📍 Address</strong> : @Customer?.Address
+        </div>
+        <div class="mb-3">
+            <span> Number of active orders @(Customer?.NumberOfOrders > 0 ? Customer.NumberOfOrders : 0)</span>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-primary flex-fill" @onclick="BeginEdit">
+                Edit
+            </button>
+
+            <button type="button" class="btn btn-outline-danger flex-fill" @onclick="DeleteAsync">
+                Delete
+            </button>
+
+            <button type="button" class="btn btn btn-info flex-fill" @onclick="AddOrder">
+                Add Order
+            </button>
+        </div>
+    }
+
+</div>
+@code {
+    [Parameter]
+    public CustomerViewModel? Customer { get; set; }
+
+    [Parameter]
+    public EventCallback<CustomerViewModel> OnSave { get; set; }
+
+    [Parameter]
+    public EventCallback<int> OnDelete { get; set; }
+
+    private bool isEditing;
+
+    private CustomerViewModel editModel = new();
+
+    private async Task BeginEdit()
+    {
+        if (Customer is null)
+            return;
+
+        editModel = new CustomerViewModel
+        {
+            Id = Customer.Id,
+            Name = Customer.Name,
+            ContactNumber = Customer.ContactNumber,
+            Address = Customer.Address
+        };
+
+        isEditing = true;
+
+        await Task.CompletedTask;
+    }
+
+    private void CancelEdit()
+    {
+        isEditing = false;
+    }
+
+    private void AddOrder()
+    {
+        if (Customer is null)
+            return;
+
+        navManager.NavigateTo($"/addSalesOrder/customer/{Customer.Id}");
+    }
+
+    private async Task SaveEditAsync()
+    {
+        await OnSave.InvokeAsync(editModel);
+
+        isEditing = false;
+
+        editModel = new();        
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (Customer is null)
+            return;
+
+        await OnDelete.InvokeAsync(Customer.Id);
+    }
+}

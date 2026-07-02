@@ -1,0 +1,37 @@
+﻿@using Milkman2.Features.LogIn.Components
+@inherits LayoutComponentBase
+
+<AuthorizeView>
+    <Authorizing>Checking Auth State</Authorizing>
+    <NotAuthorized>
+        <Login></Login>
+    </NotAuthorized>
+    <Authorized>
+        <Navbar />
+        <div class="page-title bg-app-secondary">
+            <h5 class="mb-0"><SectionOutlet SectionName="pageTitle" /></h5>
+        </div>
+        <div class="main-content container-fluid">
+            @Body
+        </div>
+        <Tabbar />
+    </Authorized>
+</AuthorizeView>
+
+
+
+<style>
+    .main-content {
+        padding-top: calc(var(--navbar-height) + 55px);
+        padding-bottom: calc(var(--tabbar-height) + 5px);
+        overflow-y: auto;
+    }
+    .page-title {
+        left: 0;
+        right: 0;
+        width: 100%;
+        top: calc(var(--navbar-height) + 5px);
+        padding: 10px;
+        position: fixed
+    }
+</style>

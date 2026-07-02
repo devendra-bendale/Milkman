@@ -1,0 +1,49 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.Authorization
+@using Milkman2.Features.DailyEntry
+@using Milkman2.Features.PurchaseOrders
+@inject PurchaseOrderService purchaseOrderService
+@inject DailyEntryService dailyEntryService
+
+@attribute [Authorize]
+
+<SectionContent SectionName="pageTitle">
+    Dashboard
+</SectionContent>
+
+<h3>Todays Available Stock</h3>
+<div class="today-stock">
+    @foreach (var poQuantity in purchasedQuantity)
+    {
+        <div class="card stock-card">
+            <div class="card-body stock-card-body">
+                <div class="stock-type">
+                    @poQuantity.MilkTypeName
+                </div>
+                <div class="stock-quantity">
+                    @(poQuantity.Quantity - soldQuantity.Where(x => x.MilkTypeId == poQuantity.MilkTypeId).Select(x => x.Quantity).FirstOrDefault())
+                    <span class="stock-label">Out Of</span>
+                    <span class="stock-total">@poQuantity.Quantity</span>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<MilkQuantityViewModel> purchasedQuantity = new();
+    private List<MilkQuantityViewModel> soldQuantity = new();
+
+    protected override async Task OnInitializedAsync()
+    {        
+        await LoadAsync();
+    }
+
+    public async Task LoadAsync()
+    {
+        purchasedQuantity = await purchaseOrderService.GetPurchasedQuantity();
+        soldQuantity = await dailyEntryService.GetSoldQuantity();
+
+        StateHasChanged();
+    }
+}

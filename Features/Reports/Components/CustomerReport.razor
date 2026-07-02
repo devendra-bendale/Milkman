@@ -1,0 +1,248 @@
+﻿@using System
+@using System.Linq
+@using System.Collections.Generic
+@using Milkman2.Features.DailyEntry
+@inject ReportService ReportService
+
+<div class="card mb-3 p-3">
+    <div class="mb-2">
+        <label>Start Date</label>
+        <InputDate class="form-control" @bind-Value="startDate" />
+    </div>
+    <div class="mb-2">
+        <label>End Date</label>
+        <InputDate class="form-control" @bind-Value="endDate" />
+    </div>
+    <button class="btn btn-primary" type="submit" @onclick="GetReport">Get Report</button>
+    <br />
+    <div class="mb-3">
+        <input class="form-control"
+               placeholder="Search by name..."
+               value="@searchText"
+               @oninput="OnSearchInput" />
+    </div>
+</div>
+@foreach (var customer in FilteredCustomers)
+{
+    <div class="card shadow-sm border-0 rounded-4 mb-3">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">@customer.CustomerName</h5>
+        </div>
+        <div class="card-body">
+            @foreach (var item in customer.MilkMasterDetails)
+            {
+                if (item.Quantity > 0)
+                {
+                    <div class="border-bottom pb-2 mb-2">
+
+                        <div class="fw-semibold">
+                            @item.MilkType
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-1">
+                            <span>Quantity</span>
+                            <span>@item.Quantity.ToString("0.00") Ltr</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <span>Amount</span>
+                            <span>₹ @item.Amount.ToString("0.00")</span>
+                        </div>
+                    </div>
+                }
+            }
+            <div class="d-flex justify-content-between fw-bold fs-5 text-primary">
+                <span>Total</span>
+                <span>₹ @customer.TotalAmount.ToString("0.00") Rs.</span>
+            </div>
+
+            @* Daily records displayed as rows of up to 7 records each *@
+            <div class="daily-grid mt-3">
+                @{
+                    var daily = customer.MilkDailyDetails ?? Enumerable.Empty<object>();
+                    foreach (var chunk in Chunk(daily, 7))
+                    {
+                        <div class="d-flex week-row mb-1">
+                            @foreach (var d in chunk)
+                            {
+                                <div class="daily-cell text-center p-2 flex-fill">
+                                    @{
+                                        var isActive = d.GetType().GetProperty("IsActive");
+                                        if (isActive != null && isActive.GetValue(d) is bool active && !active)
+                                        {
+                                            <div class="small text-muted">
+                                                @{
+                                                    var dayProp = d.GetType().GetProperty("Day");
+                                                    if (dayProp != null && dayProp.GetValue(d) is IFormattable dt)
+                                                    {
+                                                        @($"{dt.ToString("0", null)}")
+                                                    }
+                                                    else
+                                                    {
+                                                        @("-")
+                                                    }
+                                                }
+                                            </div>
+                                            <div class="small text-muted">
+                                                @($"A")
+                                            </div>
+                                            
+                                        }
+                                        else
+                                        {
+                                            <div class="small text-muted">
+                                                @{
+                                                    var dayProp = d.GetType().GetProperty("Day");
+                                                    if (dayProp != null && dayProp.GetValue(d) is IFormattable dt)
+                                                    {
+                                                        @($"{dt.ToString("0", null)}")
+                                                    }
+                                                    else
+                                                    {
+                                                        @("-")
+                                                    }
+                                                }
+                                            </div>
+                                            <div class="small text-muted">
+                                                @{
+                                                    var qtyProp = d.GetType().GetProperty("Quantity");
+                                                    if ((qtyProp != null && qtyProp.GetValue(d) is IFormattable q))
+                                                    {
+                                                        @($"{q.ToString("0.00", null)} Ltr")
+                                                    }
+                                                    else
+                                                    {
+                                                        @("-")
+                                                    }
+                                                }
+                                            </div>
+                                            <div class="small text-muted">
+                                                @{
+                                                    var milkTypeProp = d.GetType().GetProperty("MilkType");
+                                                    if ((milkTypeProp != null && milkTypeProp.GetValue(d) is String m))
+                                                    {
+                                                        @($"{m.ToString()}")
+                                                    }
+                                                    else
+                                                    {
+                                                        @("-")
+                                                    }
+                                                }
+                                            </div>
+                                            <div class="text-primary small">
+                                                @{
+                                                    var amtProp = d.GetType().GetProperty("Amount");
+                                                    if (amtProp != null && amtProp.GetValue(d) is IFormattable a)
+                                                    {
+                                                        @($"₹ {a.ToString("0.00", null)}")
+                                                    }
+                                                    else
+                                                    {
+                                                        @("-")
+                                                    }
+                                                }
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private DateOnly startDate = DateOnly.FromDateTime(
+        new DateTime(
+            DateTime.Today.Year,
+            DateTime.Today.Month,
+            1)
+        .AddMonths(-1));
+
+    private DateOnly endDate = DateOnly.FromDateTime(
+        new DateTime(
+            DateTime.Today.Year,
+            DateTime.Today.Month,
+            1)
+        .AddDays(-1));
+
+    private List<CustomerMasterReportViewModel> customerMasterReportViewModels = new();
+    private string searchText = string.Empty;
+
+    private async Task GetReport()
+    {
+        customerMasterReportViewModels = await ReportService.GetCustomerMasterReportAsync(startDate, endDate);
+    }
+
+    private IEnumerable<CustomerMasterReportViewModel> FilteredCustomers
+    {
+        get
+        {
+            var q = (searchText ?? string.Empty).Trim();
+
+            if (string.IsNullOrWhiteSpace(q))
+                return customerMasterReportViewModels;
+
+            return customerMasterReportViewModels.Where(c =>
+                (!string.IsNullOrEmpty(c.CustomerName) && c.CustomerName.Contains(q, StringComparison.OrdinalIgnoreCase)));
+        }
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        searchText = e?.Value?.ToString() ?? string.Empty;
+        StateHasChanged();
+    }
+
+    // Helper: chunk an IEnumerable into lists of specified size (preserves order)
+    private static IEnumerable<List<T>> Chunk<T>(IEnumerable<T> source, int size)
+    {
+        if (source == null) yield break;
+        var buffer = new List<T>(size);
+        foreach (var item in source)
+        {
+            buffer.Add(item);
+            if (buffer.Count == size)
+            {
+                yield return new List<T>(buffer);
+                buffer.Clear();
+            }
+        }
+        if (buffer.Count > 0) yield return buffer;
+    }
+}
+<style>
+    .card {
+        border-radius: 20px;
+    }
+
+    .card-header {
+        border-top-left-radius: 20px !important;
+        border-top-right-radius: 20px !important;
+    }
+
+    .report-item {
+        padding: 12px 0;
+    }
+
+    .daily-grid .week-row {
+        display: flex;
+        gap: 0;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        overflow: hidden;
+        flex-wrap: nowrap;
+    }
+
+    .daily-grid .daily-cell {
+        min-width: 80px;
+        border-right: 1px solid #e9ecef;
+    }
+
+        .daily-grid .daily-cell:last-child {
+            border-right: none;
+        }
+</style>

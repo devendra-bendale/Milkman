@@ -1,0 +1,89 @@
+@inject SupplierService SupplierService
+
+@if (suppliers is null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!suppliers.Any())
+{
+    <p>No suppliers found.</p>
+}
+else
+{
+    <div class="mb-3">
+        <input class="form-control"
+               placeholder="Search by name or contact number..."
+               value="@searchText"
+               @oninput="OnSearchInput" />
+    </div>
+
+    @if (!FilteredSuppliers.Any())
+    {
+        <p>No suppliers match your search.</p>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var s in FilteredSuppliers)
+            {
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card">
+                        <EditViewSupplier Supplier="s" OnSave="HandleSave" OnDelete="HandleDelete"></EditViewSupplier>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}
+@code {
+    private List<SupplierViewModel> suppliers = new();
+
+    private string searchText = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private IEnumerable<SupplierViewModel> FilteredSuppliers
+    {
+        get
+        {
+            var q = (searchText ?? string.Empty).Trim();
+
+            if (string.IsNullOrWhiteSpace(q))
+                return suppliers;
+
+            return suppliers.Where(c =>
+                (!string.IsNullOrEmpty(c.Name) && c.Name.Contains(q, System.StringComparison.OrdinalIgnoreCase))
+                || (!string.IsNullOrEmpty(c.ContactNumber) && c.ContactNumber.Contains(q, System.StringComparison.OrdinalIgnoreCase)));
+        }
+    }
+
+    public async Task LoadAsync()
+    {
+        suppliers = await SupplierService.GetAllAsync();
+        StateHasChanged();
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        searchText = e?.Value?.ToString() ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private async Task HandleSave(SupplierViewModel model)
+    {
+        await SupplierService.UpdateAsync(model);
+
+        await LoadAsync();
+        StateHasChanged();
+    }
+
+    private async Task HandleDelete(int id)
+    {
+        await SupplierService.DeleteAsync(id);
+        await LoadAsync();
+        StateHasChanged();
+    }
+}

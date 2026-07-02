@@ -1,0 +1,84 @@
+﻿@implements IDisposable
+@inject NavigationManager NavigationManager
+
+<div class="tabbar bg-app-primary text-white">
+
+    @foreach (var item in _menuItems)
+    {
+        var activeClass = _selectedPage == item.Url ? "text-app-primary" : "text-secondary";
+        <div class="tabbar-item d-flex flex-column position-relative text-secondary" @onclick="item.OnTap">
+            <i class="icon bx @item.Icon"></i>
+            <span class="title">@item.Label</span>
+        </div>
+    }
+
+</div>
+
+@code {
+    private static MenuItem[] _menuItems = [];
+    private string _selectedPage = "/";
+
+    protected override void OnInitialized()
+    {
+        _menuItems = [
+            new("Supplier Order","bxs-cart",PageRoutes.SupplierOrder, () => NavigateTo(PageRoutes.SupplierOrder)),
+            new("Customer Order","bxs-basket",PageRoutes.SalesOrder, () => NavigateTo(PageRoutes.SalesOrder)),
+            new("Daily Entry","bxs-book-add", PageRoutes.DailyEntries, () => NavigateTo(PageRoutes.DailyEntries)),
+            new("Report","bxs-user", PageRoutes.Reports, () => NavigateTo(PageRoutes.Reports)),
+        ];
+
+        NavigationManager.LocationChanged += (s, e) =>
+        {
+            _selectedPage = e.Location.Replace(NavigationManager.BaseUri, "/");
+            StateHasChanged();
+        };
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= (s, e) =>
+        {
+            _selectedPage = e.Location;
+            StateHasChanged();
+        };
+    }
+
+    private void NavigateTo(string url) => NavigationManager.NavigateTo(url);
+
+    private record struct MenuItem(string Label, string Icon, string Url, Action OnTap);
+
+    private static class PageRoutes
+    {
+        public const string SupplierOrder = "/listPurchaseOrders";
+        public const string SalesOrder = "/listSalesOrders";
+        public const string DailyEntries = "/listDailyEntries";
+        public const string Reports = "/reports";
+    }
+}
+
+<style>
+    .tabbar {
+        height: var(--tabbar-height);
+        z-index: 10;
+        bottom: 0;
+        display: flex;
+        justify-content: space-around;
+        left: 0;
+        right: 0;
+        width: 100%;
+        padding: 8px 0;
+        position: fixed;
+        align-items: center;
+        background-color: white;
+        box-shadow: 0 0 2px gray;
+    }
+
+    .tabbar-item {
+        justify-content: center;
+        align-items: center;
+    }
+
+    .title {
+        font-size: 14px;
+    }
+</style>

@@ -1,0 +1,16 @@
+@page "/suppliers"
+@using Milkman2.Features.Suppliers.Components
+<SectionContent SectionName="pageTitle">
+    Suppliers
+</SectionContent>
+<AddSupplier OnSupplierAdded="HandleSupplierAdded"></AddSupplier>
+<hr />
+<ListSupplier @ref="listSupplierComponent"></ListSupplier>
+@code {
+    private ListSupplier? listSupplierComponent;
+
+    private async Task HandleSupplierAdded()
+    {
+        await listSupplierComponent!.LoadAsync();
+    }
+}

@@ -1,0 +1,148 @@
+﻿@page "/addUpdateDailyEntry"
+@page "/addUpdateDailyEntry/{dailyEntryId:int}"
+
+@using Milkman2.Features.Customers
+@using Milkman2.Features.MilkTypes
+@inject NavigationManager navManager
+@inject CustomerService CustomerService
+@inject MilkTypeService MilkTypeService
+@inject DailyEntryService DailyEntryService
+
+<SectionContent SectionName="pageTitle">
+    @OperationName Daily Entry
+</SectionContent>
+
+<div class="card mb-3 p-3">
+    <EditForm Model="newEntry" OnValidSubmit="AddDailyEntryAsync">
+        <DataAnnotationsValidator />
+        <div class="mb-2">
+            <label>Customers</label>
+            <InputSelect class="form-control" @bind-Value="newEntry.CustomerId">
+                @if (newEntry.CustomerId == 0)
+                {
+                    <option value="0">Select Customer</option>
+                }
+                @foreach (var s in customers)
+                {
+                    <option value="@s.Id">@s.Name</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => newEntry.CustomerId)" />
+        </div>
+        <div class="mb-2">
+            <label>Milk Type</label>
+            <InputSelect class="form-control" @bind-Value="SelectedMilkTypeId" TValue="int">
+                <option value="0">Select MilkType</option>
+                @foreach (var m in milkTypes)
+                {
+                    <option value="@m.Id">@m.TypeName</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => newEntry.MilkTypeId)" />
+        </div>
+        <div class="mb-2">
+            <label>Quantity</label>
+            <InputNumber class="form-control" @bind-Value="newEntry.Quantity" />
+        </div>
+        <div class="mb-2">
+            <label>Rate @newEntry.Rate</label>
+            <InputNumber class="form-control" @bind-Value="newEntry.Rate" />
+        </div>
+        @* <div class="mb-2">
+            <label>Amount</label>
+            @newOrder.Amount
+        </div> *@
+        <div class="mb-2">
+            <label>Date</label>
+            <InputDate class="form-control" @bind-Value="newEntry.Date" />
+        </div>
+        <button class="btn btn-primary" type="submit">@OperationName</button>
+        <button type="button" class="btn btn-secondary flex-fill" @onclick="Cancel">
+            Cancel
+        </button>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int? dailyEntryId { get; set; }
+
+    private string OperationName
+    {
+        get
+        {
+            if (dailyEntryId.HasValue && dailyEntryId.Value > 0)
+            {
+                return "Update";
+            }
+            else
+            {
+                return "Add";
+            }
+        }
+    }
+
+    private List<CustomerViewModel> customers = new();
+    private List<MilkTypeViewModel> milkTypes = new();
+    private DailyEntryViewModel newEntry = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        customers = await CustomerService.GetAllAsync();
+        milkTypes = await MilkTypeService.GetAllAsync();
+
+        if (dailyEntryId.HasValue && dailyEntryId.Value > 0)
+        {
+            var existing = await DailyEntryService.GetByIdAsync(dailyEntryId.Value);
+            if (existing != null)
+            {
+                newEntry = existing;
+            }
+        }
+    }
+
+    private async Task AddDailyEntryAsync()
+    {
+        if (!dailyEntryId.HasValue || dailyEntryId.Value == 0)
+        {
+            await DailyEntryService.AddAsync(newEntry);
+        }
+        else
+        {
+            await DailyEntryService.UpdateAsync(newEntry);
+        }
+
+        navManager.NavigateTo("/listDailyEntries");
+    }
+
+    private int SelectedMilkTypeId
+    {
+        get => newEntry.MilkTypeId;
+        set
+        {
+            if (newEntry.MilkTypeId != value)
+            {
+                newEntry.MilkTypeId = value;
+                SetAmountAsync();
+            }
+        }
+    }
+
+    private Task SetAmountAsync()
+    {
+        var selected = milkTypes.FirstOrDefault(m => m.Id == newEntry.MilkTypeId);
+        if (selected is not null)
+        {
+            newEntry.Rate = selected.SalesRate;
+            StateHasChanged();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void Cancel()
+    {
+        navManager.NavigateTo("/listDailyEntries");
+    }
+}

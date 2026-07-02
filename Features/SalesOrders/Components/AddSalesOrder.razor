@@ -1,0 +1,172 @@
+﻿@page "/addSalesOrder"
+@page "/addSalesOrder/{poId:int}"
+@page "/addSalesOrder/customer/{customerId:int}"
+
+@inject NavigationManager navManager
+
+@using Milkman2.Services.SalesOrders
+@using Milkman2.Features.MilkTypes
+@using Milkman2.Features.Customers
+@using Milkman2.Data.Models
+@using System
+@inject CustomerService CustomerService
+@inject MilkTypeService MilkTypeService
+@inject SalesOrderService SalesOrderService
+
+<SectionContent SectionName="pageTitle">
+    @OperationName Customer Order
+</SectionContent>
+
+<div class="card mb-3 p-3">
+    <EditForm Model="newOrder" OnValidSubmit="AddOrderAsync">
+        <DataAnnotationsValidator />
+        <div class="mb-2">
+            <label>Customers</label>
+            <InputSelect class="form-control" @bind-Value="newOrder.CustomerId">
+                @if (customerId is null || customerId!.Value == 0)
+                {
+                    <option value="0">Select Customer</option>
+                }
+                @foreach (var s in customers)
+                {
+                    <option value="@s.Id">@s.Name</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => newOrder.CustomerId)" />
+        </div>
+        <div class="mb-2">
+            <label>Milk Type</label>
+            <InputSelect class="form-control" @bind-Value="SelectedMilkTypeId" TValue="int">
+                <option value="0">Select MilkType</option>
+                @foreach (var m in milkTypes)
+                {
+                    <option value="@m.Id">@m.TypeName</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => newOrder.MilkTypeId)" />
+        </div>
+        <div class="mb-2" style="display:none">
+            <label>Delivery Frequency</label>
+            <InputSelect class="form-control" @bind-Value="newOrder.Frequency" TValue="DeliveryFrequency">
+                @foreach (var f in Enum.GetValues<DeliveryFrequency>())
+                {
+                    <option value="@f">@f</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => newOrder.Frequency)" />
+        </div>
+        <div class="mb-2">
+            <label>Quantity</label>
+            <InputNumber class="form-control" @bind-Value="newOrder.Quantity" />
+        </div>
+        <div class="mb-2">
+            <label>Rate</label>
+            <InputNumber class="form-control" @bind-Value="newOrder.Rate" />
+        </div>
+        @* <div class="mb-2">
+            <label>Amount</label>
+            @newOrder.Amount
+        </div> *@
+        <div class="mb-2">
+            <label>Date</label>
+            <InputDate class="form-control" @bind-Value="newOrder.StartDate" />
+        </div>
+        <button class="btn btn-primary" type="submit">@OperationName</button>
+        <button type="button" class="btn btn-secondary flex-fill" @onclick="Cancel">
+            Cancel
+        </button>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int? poId { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int? customerId { get; set; } = 0;
+
+    private string OperationName
+    {
+        get
+        {
+            if ((poId.HasValue && poId.Value > 0) || (customerId.HasValue && customerId.Value > 0))
+            {
+                return "Update";
+            }
+            else
+            {
+                return "Add";    
+            }
+        }    
+    }
+
+    private List<CustomerViewModel> customers = new();
+    private List<MilkTypeViewModel> milkTypes = new();
+    private SalesOrderViewModel newOrder = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        customers = await CustomerService.GetAllAsync();
+        milkTypes = await MilkTypeService.GetAllAsync();
+
+        if (poId.HasValue && poId.Value > 0)
+        {
+            var existing = await SalesOrderService.GetBySOIdAsync(poId.Value);
+            if (existing != null)
+            {
+                newOrder = existing;
+            }
+        }
+        if (customerId.HasValue && customerId.Value > 0)
+        {
+            customers = customers.Where(c => c.Id == customerId.Value).ToList();
+            newOrder.CustomerId = customerId.Value;
+        }
+    }
+
+    private async Task AddOrderAsync()
+    {
+        if (!poId.HasValue || poId.Value == 0)
+        {
+            await SalesOrderService.AddAsync(newOrder);
+        }
+        else
+        {
+            await SalesOrderService.UpdateAsync(newOrder);
+        }
+
+        navManager.NavigateTo("/listSalesOrders");
+    }
+
+    private int SelectedMilkTypeId
+    {
+        get => newOrder.MilkTypeId;
+        set
+        {
+            if (newOrder.MilkTypeId != value)
+            {
+                newOrder.MilkTypeId = value;
+                SetAmountAsync();
+            }
+        }
+    }
+
+    private Task SetAmountAsync()
+    {
+        var selected = milkTypes.FirstOrDefault(m => m.Id == newOrder.MilkTypeId);
+        if (selected is not null)
+        {
+            newOrder.Rate = selected.SalesRate;
+            StateHasChanged();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void Cancel()
+    {
+        navManager.NavigateTo("/listSalesOrders");
+    }
+}

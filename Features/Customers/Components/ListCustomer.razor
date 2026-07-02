@@ -1,0 +1,89 @@
+﻿@inject CustomerService CustomerService
+
+@if (customers is null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!customers.Any())
+{
+    <p>No customers found.</p>
+}
+else
+{
+    <div class="mb-3">
+        <input class="form-control"
+               placeholder="Search by name or contact number..."
+               value="@searchText"
+               @oninput="OnSearchInput" />
+    </div>
+
+    @if (!FilteredCustomers.Any())
+    {
+        <p>No customers match your search.</p>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var c in FilteredCustomers)
+            {
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card">
+                        <EditViewCustomer Customer="c" OnSave="HandleSave" OnDelete="HandleDelete"></EditViewCustomer>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}
+@code {
+    private List<CustomerViewModel> customers = new();
+
+    private string searchText = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private IEnumerable<CustomerViewModel> FilteredCustomers
+    {
+        get
+        {
+            var q = (searchText ?? string.Empty).Trim();
+
+            if (string.IsNullOrWhiteSpace(q))
+                return customers;
+
+            return customers.Where(c =>
+                (!string.IsNullOrEmpty(c.Name) && c.Name.Contains(q, StringComparison.OrdinalIgnoreCase))
+                || (!string.IsNullOrEmpty(c.ContactNumber) && c.ContactNumber.Contains(q, StringComparison.OrdinalIgnoreCase)));
+        }
+    }
+
+    public async Task LoadAsync()
+    {
+        customers = await CustomerService.GetAllAsync();
+        StateHasChanged();
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        searchText = e?.Value?.ToString() ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private async Task HandleSave(CustomerViewModel model)
+    {
+        await CustomerService.UpdateAsync(model);
+
+        await LoadAsync();
+        StateHasChanged();
+    }
+
+    private async Task HandleDelete(int id)
+    {
+        await CustomerService.DeleteAsync(id);
+        await LoadAsync();
+        StateHasChanged();
+    }
+}

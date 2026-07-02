@@ -1,0 +1,55 @@
+﻿@page "/add-customer"
+
+@using Milkman2.Features.Customers
+@inject CustomerService CustomerService
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+        <EditForm Model="model" OnValidSubmit="SaveAsync">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-2">
+                <label>Name</label>
+                <InputText class="form-control" @bind-Value="model.Name" />
+            </div>
+
+            <div class="mb-2">
+                <label>Contact Number</label>
+                <InputText class="form-control" @bind-Value="model.ContactNumber" />
+            </div>
+
+            <div class="mb-2">
+                <label>Address</label>
+                <InputText class="form-control" @bind-Value="model.Address" />
+            </div>
+            <button class="btn btn-success">
+                Save
+            </button>
+
+            <button type="button" class="btn btn-secondary ms-2" @onclick="Cancel">
+                Cancel
+            </button>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback OnCustomerAdded { get; set; }
+
+    private CustomerViewModel model = new();
+
+    private async Task SaveAsync()
+    {
+        await CustomerService.AddAsync(model);
+
+        await OnCustomerAdded.InvokeAsync();
+        model = new();
+    }
+
+    private void Cancel()
+    {
+        model = new();
+    }
+}

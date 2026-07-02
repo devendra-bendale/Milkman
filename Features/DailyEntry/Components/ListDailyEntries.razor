@@ -1,0 +1,119 @@
+﻿@page "/listDailyEntries"
+@using Milkman2.Features.Customers
+@inject DailyEntryService dailyEntryService
+@inject NavigationManager navManager
+
+<SectionContent SectionName="pageTitle">
+    Daily Entry
+</SectionContent>
+
+<div class="row">
+    <div class="col-3 d-flex align-items-center">
+        <button class="btn btn-primary rounded-circle shadow add-button" @onclick="AddNewEntry">
+            +
+        </button>
+        <div class="form-check mb-0">
+            <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" @onchange="OnDefaultChanged">
+            <label class="form-check-label ms-1" for="flexCheckDefault">
+                All Days
+            </label>
+        </div>
+    </div>
+    <div class="col-9">
+        <div class="mb-3">
+            <input class="form-control"
+                   placeholder="Search by customer name..."
+                   value="@searchText"
+                   @oninput="OnSearchInput" />
+        </div>
+    </div>
+</div>
+@if (FilteredDailyEntries is null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!FilteredDailyEntries.Any())
+{
+    <p>No daily entry found.</p>
+}
+else
+{
+    foreach (var dailyEntry in FilteredDailyEntries)
+    {
+        <div class="card m-1" style="cursor:pointer">
+            <div class="card-body py-3 px-4">
+                <div class="row">
+                    <div class="col-5" @onclick="() => EditOrder(dailyEntry.Id)">
+                        <b class="fw-bold fs-5">@dailyEntry.CustomerName</b>
+                        <br />
+                        @dailyEntry.Date.ToShortDateString()
+                    </div>
+                    <div class="col-5">@dailyEntry.MilkTypeName <br /> @dailyEntry.Quantity ltrs</div>
+                    <div class="col-2" style="display:flex; align-items:center; justify-content:center">
+                        <button class="btn btn-danger btn-sm rounded-circle"
+                                style="width:36px;height:36px;" @onclick="() => Cancel(dailyEntry.Id)">
+                            ✕
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+@code {
+    private List<DailyEntryViewModel> dailyEntries = new();
+    private string searchText = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    public async Task LoadAsync(bool isAll = false)
+    {
+        dailyEntries = await dailyEntryService.GetAllAsync(isAll);
+        StateHasChanged();
+    }
+
+    private IEnumerable<DailyEntryViewModel> FilteredDailyEntries
+    {
+        get
+        {
+            var q = (searchText ?? string.Empty).Trim();
+
+            if (string.IsNullOrWhiteSpace(q))
+                return dailyEntries;
+
+            return dailyEntries.Where(c =>
+                (!string.IsNullOrEmpty(c.CustomerName) && c.CustomerName.Contains(q, StringComparison.OrdinalIgnoreCase)));
+        }
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        searchText = e?.Value?.ToString() ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private async Task OnDefaultChanged(ChangeEventArgs e)
+    {
+        await LoadAsync((bool)e?.Value);
+    }
+
+    private void AddNewEntry()
+    {
+        navManager.NavigateTo("/addUpdateDailyEntry");
+    }
+
+    private async Task Cancel(int id)
+    {
+        await dailyEntryService.DeleteAsync(id);
+        await LoadAsync();
+        StateHasChanged();
+    }
+
+    private void EditOrder(int id)
+    {
+        navManager.NavigateTo($"/addUpdateDailyEntry/{id}");
+    }
+}

@@ -1,0 +1,95 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Milkman2.Features.LogIn
+@implements IDisposable
+@inject NavigationManager NavigationManager
+@inject AppAuthStateProvider customAuthenticationStateProvider
+
+<div class="navbar bg-app-primary text-white">    
+    @foreach (var item in _menuItems)
+    {
+        var activeClass = _selectedPage == item.Url ? "text-app-primary" : "text-secondary";
+        <div class="toolbar-items d-flex flex-column position-relative align-items-center" @onclick="item.OnTap">
+            <i class="icon bx @item.Icon"></i>
+            <span class="title">@item.Label</span>
+        </div>
+    }
+</div>
+
+@code {
+    private static MenuItem[] _menuItems = [];
+    private string _selectedPage = PageRoutes.Dashboard;
+
+    protected override void OnInitialized()
+    {
+        _menuItems = [
+            new("Dashboard","bxs-home",PageRoutes.Dashboard, () => NavigateTo(PageRoutes.Dashboard)),
+            new("Customers","bxs-contact",PageRoutes.Customers, () => NavigateTo(PageRoutes.Customers)),
+            new("Suppliers","bxs-truck", PageRoutes.Suppliers, () => NavigateTo(PageRoutes.Suppliers)),
+            new("MilkType","bx-clipboard", PageRoutes.MilkType, () => NavigateTo(PageRoutes.MilkType)),
+            new("Logout","bxs-arrow-to-right", PageRoutes.LogIn, () => Logout())
+        ];
+
+        NavigationManager.LocationChanged += (s, e) =>
+        {
+            _selectedPage = e.Location.Replace(NavigationManager.BaseUri, "/");
+            StateHasChanged();
+        };
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= (s, e) =>
+        {
+            _selectedPage = e.Location;
+            StateHasChanged();
+        };
+    }
+
+    private void NavigateTo(string url) => NavigationManager.NavigateTo(url);
+
+    private record struct MenuItem(string Label, string Icon, string Url, Action OnTap);
+
+    private static class PageRoutes
+    {
+        public const string Dashboard = "/";
+        public const string Suppliers = "/suppliers";
+        public const string Customers = "/customers";
+        public const string MilkType = "/milktypes";
+        public const string LogIn = "/login";
+    }
+
+    private void Logout()
+    {
+        customAuthenticationStateProvider.Logout();
+        //var customAuthenticationStateProvider = (CustomerAuthenticationStateProvider)authenticationStateProvider;
+        //await customAuthenticationStateProvider.UpdateAuthenticationState(null);
+    }
+}
+
+<style>
+    .navbar {
+        height: var(--navbar-height);
+        position: sticky;
+        z-index: 10;
+        top: 0;
+        display: flex;
+        justify-content: space-around;
+        left: 0;
+        right: 0;
+        width: 100%;
+        padding: 8px 0;
+        position: fixed;
+        align-items: center;
+        font-size: 18px;
+        box-shadow: 0 5px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .navbar-item {
+        justify-content: center;
+        align-items: center;
+    }
+
+    .title {
+        font-size: 14px;
+    }
+</style>

@@ -1,0 +1,67 @@
+﻿@page "/reports"
+@using Milkman2.Features.Reports.Components
+
+<SectionContent SectionName="pageTitle">
+    Reports
+</SectionContent>
+
+<div class="card shadow-sm">
+
+    <div class="card-header bg-white">
+
+        <ul class="nav nav-tabs card-header-tabs">
+
+            <li class="nav-item">
+                <button class="nav-link @(selectedTab == ReportTab.Customer ? "active" : "")"
+                        @onclick='() => SelectTab(ReportTab.Customer)'>
+
+                    Customer
+
+                </button>
+            </li>
+
+            <li class="nav-item">
+                <button class="nav-link @(selectedTab == ReportTab.Supplier ? "active" : "")"
+                        @onclick='() => SelectTab(ReportTab.Supplier)'>
+
+                    Supplier
+
+                </button>
+            </li>
+
+        </ul>
+
+    </div>
+
+    <div>
+
+        @switch (selectedTab)
+        {
+            case ReportTab.Customer:
+                <CustomerReport />
+                break;
+
+            case ReportTab.Supplier:
+                <SupplierReport />
+                break;
+        }
+
+    </div>
+
+</div>
+
+@code {
+
+    private ReportTab selectedTab = ReportTab.Customer;
+
+    private void SelectTab(ReportTab tab)
+    {
+        selectedTab = tab;
+    }
+
+    private enum ReportTab
+    {
+        Customer,
+        Supplier
+    }
+}

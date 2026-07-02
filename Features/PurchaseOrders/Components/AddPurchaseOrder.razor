@@ -1,0 +1,182 @@
+﻿@page "/addPurchaseOrder"
+@page "/addPurchaseOrder/{poId:int}"
+@page "/addPurchaseOrder/supplier/{supplierId:int}"
+
+@inject NavigationManager navManager
+
+@using Milkman2.Features.MilkTypes
+@using Milkman2.Features.Suppliers
+@inject SupplierService SupplierService
+@inject MilkTypeService MilkTypeService
+@inject PurchaseOrderService PurchaseOrderService
+
+<SectionContent SectionName="pageTitle">
+    @OperationName Supplier Order
+</SectionContent>
+
+<div class="card mb-3 p-3">
+    <EditForm Model="newOrder" OnValidSubmit="AddOrderAsync">
+        <DataAnnotationsValidator />
+        <div class="mb-2">
+            <label>Supplier</label>
+            <InputSelect class="form-control" @bind-Value="newOrder.SupplierId">
+                @if (supplierId is null || supplierId!.Value == 0)
+                {
+                    <option value="0">Select Supplier</option>
+                }
+                @foreach (var s in suppliers)
+                {
+                    <option value="@s.Id">@s.Name</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => newOrder.SupplierId)" />
+        </div>
+        <div class="mb-2">
+            <label>Milk Type</label>
+            <InputSelect class="form-control" @bind-Value="SelectedMilkTypeId" TValue="int">
+                <option value="0">Select MilkType</option>  
+                @foreach (var m in milkTypes)
+                {
+                    <option value="@m.Id">@m.TypeName</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => newOrder.MilkTypeId)" />
+        </div>
+        <div class="mb-2">
+            <InputRadioGroup @bind-Value="newOrder.IsMorningOrder" TValue="bool">
+                <div class="form-check">
+                    <InputRadio class="form-check-input"
+                                Value="true"  />
+                    <label class="form-check-label">
+                        Morning Order
+                    </label>
+                </div>
+
+                <div class="form-check">
+                    <InputRadio class="form-check-input"
+                                Value="false" />
+                    <label class="form-check-label">
+                        Evening Order
+                    </label>
+                </div>
+            </InputRadioGroup>
+        </div>
+        <div class="mb-2">
+            <label>Fats</label>
+            <InputNumber class="form-control" @bind-Value="newOrder.Fats" />
+        </div>
+        <div class="mb-2">
+            <label>Quantity</label>
+            <InputNumber class="form-control" @bind-Value="newOrder.Quantity" />
+        </div>
+        <div class="mb-2">
+            <label>Rate</label>
+            <InputNumber class="form-control" @bind-Value="newOrder.Rate" />
+        </div>
+        <div class="mb-2">
+            <label>Amount</label>
+            @($"{newOrder.Amount:N2} Rs.")
+        </div>
+        <div class="mb-2">
+            <label>Date</label>
+            <InputDate class="form-control" @bind-Value="newOrder.Date" />
+        </div>
+        <button class="btn btn-primary" type="submit">@OperationName</button>
+        <button type="button" class="btn btn-secondary flex-fill" @onclick="Cancel">
+            Cancel
+        </button>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int? poId { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int? supplierId { get; set; } = 0;
+
+    private string OperationName
+    {
+        get
+        {
+            if ((poId.HasValue && poId.Value > 0) || (supplierId.HasValue && supplierId.Value > 0))
+            {
+                return "Update";
+            }
+            else
+            {
+                return "Add";
+            }
+        }
+    }
+
+    private List<SupplierViewModel> suppliers = new();
+    private List<MilkTypeViewModel> milkTypes = new();
+    private PurchaseOrderViewModel newOrder = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        suppliers = await SupplierService.GetAllAsync();
+        milkTypes = await MilkTypeService.GetAllAsync();
+
+        if (poId.HasValue && poId.Value > 0)
+        {
+            var existing = await PurchaseOrderService.GetByPOIdAsync(poId.Value);
+            if (existing != null)
+            {
+                newOrder = existing;
+            }
+        }
+        if (supplierId.HasValue && supplierId.Value > 0)
+        {
+            suppliers = suppliers.Where(c => c.Id == supplierId.Value).ToList();
+            newOrder.SupplierId = supplierId.Value;
+        }
+    }
+
+    private async Task AddOrderAsync()
+    {
+        if (!poId.HasValue || poId.Value == 0)
+        {
+            await PurchaseOrderService.AddAsync(newOrder);
+        }
+        else
+        {
+            await PurchaseOrderService.UpdateAsync(newOrder);
+        }
+
+        navManager.NavigateTo("/listPurchaseOrders");
+    }    
+
+    private int SelectedMilkTypeId
+    {
+        get => newOrder.MilkTypeId;
+        set
+        {
+            if (newOrder.MilkTypeId != value)
+            {
+                newOrder.MilkTypeId = value;
+                SetAmountAsync();
+            }
+        }
+    }
+
+    private Task SetAmountAsync()
+    {
+        var selected = milkTypes.FirstOrDefault(m => m.Id == newOrder.MilkTypeId);
+        if (selected is not null)
+        {
+            newOrder.Rate = selected.SalesRate;
+            StateHasChanged();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void Cancel()
+    {
+        navManager.NavigateTo("/listPurchaseOrders");
+    }
+}

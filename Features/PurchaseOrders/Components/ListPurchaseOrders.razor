@@ -1,0 +1,107 @@
+﻿@page "/listPurchaseOrders"
+@inject PurchaseOrderService poService
+@inject NavigationManager navManager
+<SectionContent SectionName="pageTitle">
+    Supplier Order
+</SectionContent>
+<div class="row">
+    <button class="btn btn-primary rounded-circle shadow add-button" @onclick="AddNewOrder">
+        +
+    </button>
+    
+    <div class="col-12">
+        <div class="mb-3">
+            <input class="form-control"
+                   placeholder="Search by supplier name..."
+                   value="@searchText"
+                   @oninput="OnSearchInput" />
+        </div>
+    </div>
+</div>
+
+@if (FilteredPurchaseOrder is null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!FilteredPurchaseOrder.Any())
+{
+    <p>No supplier order found.</p>
+}
+else
+{
+    foreach (var po in FilteredPurchaseOrder)
+    {
+        <div class="card m-1" @onclick="() => EditOrder(po.Id)" style="cursor:pointer">
+            <div class="card-body py-3 px-4">
+                <div class="row align-items-center">
+                    <!-- Left Section -->
+                    <div class="col-6">
+                        <b class="fw-bold fs-5">@po.SupplierName</b>
+                        <br />
+                        @po.Date.ToShortDateString() (@(po.IsMorningOrder ? "Morning" : "Evening"))
+                        <br />
+                        @po.MilkTypeName
+                        <br />
+                        @po.Fats
+                    </div>
+
+                    <!-- Right Section -->
+                    <div class="col-6">
+                        <div class="row text-center">
+                            @po.Quantity ltrs
+                            <br />
+                            @po.Rate Rs./ltr
+                            <br />
+                            @($"{po.Amount:N2} Rs.")
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+@code {
+    private List<PurchaseOrderViewModel> purchaseOrders = new();
+    private string searchText = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    public async Task LoadAsync()
+    {
+        purchaseOrders = await poService.GetAllAsync();
+        StateHasChanged();
+    }
+
+    private IEnumerable<PurchaseOrderViewModel> FilteredPurchaseOrder
+    {
+        get
+        {
+            var q = (searchText ?? string.Empty).Trim();
+
+            if (string.IsNullOrWhiteSpace(q))
+                return purchaseOrders;
+
+            return purchaseOrders.Where(c =>
+                (!string.IsNullOrEmpty(c.SupplierName) && c.SupplierName.Contains(q, StringComparison.OrdinalIgnoreCase)));
+        }
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        searchText = e?.Value?.ToString() ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private void AddNewOrder()
+    {
+        navManager.NavigateTo("/addPurchaseOrder");
+    }
+
+    private void EditOrder(int id)
+    {
+        navManager.NavigateTo($"/addPurchaseOrder/{id}");
+    }
+}

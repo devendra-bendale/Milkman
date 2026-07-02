@@ -1,0 +1,200 @@
+﻿@page "/milktypes"
+@inject MilkTypeService MilkTypeService
+
+<SectionContent SectionName="pageTitle">
+    Milk Type
+</SectionContent>
+
+<div class="card">
+    <div class="card-body">
+        <EditForm Model="newMilkType" OnValidSubmit="AddMilkTypeAsync">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label class="form-label">Milk Type</label>
+                <InputText class="form-control" @bind-Value="newMilkType.TypeName" />
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">
+                        Purchase Rate
+                    </label>
+                    <InputNumber class="form-control" @bind-Value="newMilkType.PurchaseRate" />
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">
+                        Sales Rate
+                    </label>
+
+                    <InputNumber class="form-control" @bind-Value="newMilkType.SalesRate" />
+                </div>
+
+            </div>
+
+            <button class="btn btn-success">
+                Save Milk Type
+            </button>
+        </EditForm>
+    </div>
+</div>
+<hr />
+@if (milkTypes is null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!milkTypes.Any())
+{
+    <p>No milk types found.</p>
+}
+else
+{
+    <div class="row g-3">
+    @foreach (var milkType in milkTypes)
+    {
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card shadow-sm h-100 border-0">
+                <div class="card-body">
+                    @if(editingId == milkType.Id)
+                    {
+                        <div class="input-group input-group-sm mb-3">
+                            <span class="input-group-text" id="inputGroup-sizing-default">Name</span>
+                            <InputText class="form-control" @bind-Value="editModel.TypeName" aria-describedby="inputGroup-sizing-default" />
+                        </div>
+
+                        <div class="input-group input-group-sm mb-3">
+                            <span class="input-group-text" id="inputGroup-sizing-default">PurchaseRate</span>
+                            <InputNumber class="form-control" @bind-Value="editModel.PurchaseRate" aria-describedby="inputGroup-sizing-default" />
+                        </div>
+
+                        <div class="input-group input-group-sm mb-3">
+                            <span class="input-group-text" id="inputGroup-sizing-default">SalesRate</span>
+                            <InputNumber class="form-control" @bind-Value="editModel.SalesRate" aria-describedby="inputGroup-sizing-default" />
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-success flex-fill" @onclick="SaveEditAsync">
+                                Save
+                            </button>
+
+                            <button type="button" class="btn btn-secondary flex-fill" @onclick="CancelEdit">
+                                Cancel
+                            </button>
+                        </div>
+
+                    }
+                    else
+                    {
+                        <h5 class="card-title">
+                            @milkType.TypeName
+                        </h5>
+
+                        <hr />
+
+                        <div class="mb-2">
+                            <strong>Purchase Rate</strong>
+                            <div>
+                                ₹ @milkType.PurchaseRate
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <strong>Sales Rate</strong>
+                            <div>
+                                ₹ @milkType.SalesRate
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+
+                            <button class="btn btn-outline-primary flex-fill"
+                                    @onclick="() => BeginEdit(milkType)">
+                                Edit
+                            </button>
+
+                            <button class="btn btn-outline-danger flex-fill"
+                                    @onclick="() => DeleteMilkTypeAsync(milkType.Id)">
+                                Delete
+                            </button>
+
+                        </div>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+</div>
+}
+
+@code {
+    private List<MilkTypeViewModel> milkTypes = new();
+
+    private MilkTypeViewModel newMilkType = new();
+
+    private MilkTypeViewModel editModel = new();
+
+    private int? editingId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        milkTypes = await MilkTypeService.GetAllAsync();
+    }
+
+    private async Task AddMilkTypeAsync()
+    {
+        await MilkTypeService.AddAsync(newMilkType);
+
+        newMilkType = new();
+
+        await LoadAsync();
+    }
+
+    private void BeginEdit(MilkTypeViewModel model)
+    {
+        editingId = model.Id;
+
+        editModel = new MilkTypeViewModel
+        {
+            Id = model.Id,
+            TypeName = model.TypeName,
+            PurchaseRate = model.PurchaseRate,
+            SalesRate = model.SalesRate
+        };
+    }
+
+    private void CancelEdit()
+    {
+        editingId = null;
+
+        editModel = new();
+    }
+
+    private async Task SaveEditAsync()
+    {
+        await MilkTypeService.UpdateAsync(editModel);
+
+        editingId = null;
+
+        editModel = new();
+
+        await LoadAsync();
+    }
+
+    private async Task DeleteMilkTypeAsync(int id)
+    {
+        await MilkTypeService.DeleteAsync(id);
+
+        await LoadAsync();
+    }
+}

@@ -1,0 +1,89 @@
+﻿/* Scoped styles for Home.razor - responsive card grid and clear typographic hierarchy */
+
+.today-stock {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    align-items: start;
+    margin: 0.5rem 0;
+    padding: 0;
+}
+
+/* Card base */
+
+
+    /* Slight lift on hover/focus for affordance */
+    /*.stock-card:hover,
+    .stock-card:focus-within {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 26px rgba(23, 28, 36, 0.12);
+    }*/
+
+/* Body spacing */
+.stock-card-body {
+    padding: 0.9rem 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Milk type title */
+.stock-type {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #16202a;
+    margin-bottom: 0.35rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Quantity row */
+.stock-quantity {
+    font-size: 0.95rem;
+    color: #3b4a57;
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
+    flex-wrap: wrap;
+}
+
+    /* The numeric current leftover value stands out */
+    .stock-quantity > :first-child {
+        font-weight: 700;
+        color: #0b7285; /* teal-ish */
+        font-size: 1.15rem;
+    }
+
+/* Supporting labels */
+.stock-label {
+    color: #76828a;
+    font-size: 0.85rem;
+    margin-left: 4px;
+}
+
+/* Total quantity emphasize */
+.stock-total {
+    font-weight: 600;
+    color: #495057;
+    background: rgba(9, 132, 255, 0.06);
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+/* Ensure good spacing on small viewports */
+@media (max-width: 576px) {
+    .today-stock {
+        grid-template-columns: 1fr;
+    }
+
+    .stock-card {
+        min-height: 84px;
+    }
+
+    .stock-type {
+        font-size: 1rem;
+    }
+}

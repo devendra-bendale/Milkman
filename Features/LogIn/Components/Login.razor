@@ -1,0 +1,252 @@
+﻿@page "/login"
+
+@using Microsoft.AspNetCore.Components.Authorization
+@inject LogInService LogInService
+@inject NavigationManager navigationManager
+@inject AppAuthStateProvider customAuthenticationStateProvider
+@attribute [AllowAnonymous]
+
+<div class="login-page">
+
+    <div class="header-section">
+        <div class="logo-circle">
+            <img src="/images/appicon.svg" class="logo-img" />
+        </div>
+
+        <h2>Welcome!</h2>
+        <p>Sign in to continue</p>
+    </div>
+
+    <div class="login-card">
+        <EditForm Model="loginRequestDto" OnValidSubmit="LogInUser">
+            <DataAnnotationsValidator />
+        <div class="mb-3">
+            <div class="input-group login-input">
+                <span class="input-group-text">
+                        <i class="icon bx bxs-user"></i>
+                </span>
+                <InputText class="form-control" @bind-Value="loginRequestDto.UserName" placeholder="Username" />
+            </div>
+                <ValidationMessage For="() => loginRequestDto.UserName" class="validation-message" />
+        </div>
+
+        <div class="mb-4">
+            <div class="input-group login-input">
+                <span class="input-group-text">
+                        <i class="icon bx bxs-lock"></i>
+                </span>
+                <InputText type="password" class="form-control" @bind-Value="loginRequestDto.Password" placeholder="Password" />
+            </div>
+                <ValidationMessage For="() => loginRequestDto.Password" class="validation-message" />
+        </div>
+        <p class="validation-message">@loginErrorMessage</p>
+        <button class="btn btn-login w-100">
+            SIGN IN
+        </button>
+        </EditForm>
+    </div>
+
+</div>
+
+@code {
+    private LoginRequestDto loginRequestDto = new();
+    private string loginErrorMessage = string.Empty;
+
+    private async Task LogInUser()
+    {
+        var response = await LogInService.ValidateUserCredentials(loginRequestDto.UserName, loginRequestDto.Password);
+        if (response != null)
+        {
+            var loginUser = new LoggedInUser(response.Id, response.FullName);
+            var loginResponse = new LoginResponseDto(loginUser, "");
+            customAuthenticationStateProvider.Login(loginResponse);
+
+            navigationManager.NavigateTo("/", replace: true);
+        }
+        else
+        {
+            loginErrorMessage = "Invalid username or password. Please try again.";
+        }
+    }
+}
+
+<style>
+    
+    .login-page {
+        min-height: 100vh;
+        background: white;
+    }
+
+    /*=========================
+            TOP AREA
+    ==========================*/
+
+    .header-section {
+        height: 290px;
+        background: var(--app-primary);
+        border-bottom-left-radius: 50% 70px;
+        border-bottom-right-radius: 50% 70px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .logo-circle {
+        width: 95px;
+        height: 95px;
+        margin-top: 25px;
+        background: white;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,.12);
+    }
+
+    .logo-img {
+        width: 65px;
+    }
+
+    .header-section h2 {
+        margin-top: 18px;
+        font-size: 34px;
+        font-weight: 500;
+        color: black;
+    }
+
+    .header-section p {
+        color: #3d3d3d;
+        font-size: 18px;
+    }
+
+    /*=========================
+          LOGIN CARD
+    ==========================*/
+
+    .login-card {
+        width: 90%;
+        max-width: 380px;
+        margin: -20px auto 0 auto;
+        padding: 20px;
+    }
+
+    /*=========================
+          INPUT BOX
+    ==========================*/
+
+    .login-input {
+        border: 2px solid var(--app-primary);
+        border-radius: 40px;
+        overflow: hidden;
+    }
+
+        .login-input .input-group-text {
+            background: white;
+            border: none;
+            color: var(--app-primary);
+            padding-left: 20px;
+        }
+
+        .login-input .form-control {
+            border: none;
+            box-shadow: none;
+            height: 52px;
+            font-size: 17px;
+        }
+
+            .login-input .form-control:focus {
+                box-shadow: none;
+            }
+
+    /*=========================
+          BUTTON
+    ==========================*/
+
+    .btn-login {
+        background: var(--app-primary);
+        color: white;
+        border-radius: 35px;
+        height: 50px;
+        font-size: 18px;
+        font-weight: 600;
+        border: none;
+    }
+
+        .btn-login:hover {
+            background: var(--app-secondary);
+            color: white;
+        }
+
+    /*=========================
+          SIGN UP
+    ==========================*/
+
+    .signup {
+        text-align: center;
+        color: #888;
+    }
+
+        .signup a {
+            text-decoration: none;
+            color: #14b6f3;
+            font-weight: 600;
+        }
+
+    /*=========================
+            OR
+    ==========================*/
+
+    .or-divider {
+        display: flex;
+        align-items: center;
+        text-align: center;
+    }
+
+        .or-divider::before,
+        .or-divider::after {
+            content: "";
+            flex: 1;
+            border-bottom: 2px solid #999;
+        }
+
+        .or-divider span {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            border: 2px solid #14b6f3;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 12px;
+            color: #14b6f3;
+            background: white;
+            font-weight: bold;
+        }
+
+    .validation-message {
+        display: block;
+        color: #dc3545;
+        font-size: 0.85rem;
+        margin-top: 4px;
+        margin-left: 20px;
+        font-weight: 500;
+    }
+
+    .input-validation-error,
+    .invalid {
+        border: none;
+        border-radius: 40px;
+        overflow: hidden;
+    }
+
+        .login-input.invalid .form-control {
+            border: none;
+        }
+
+    .validation-summary-errors {
+        color: #dc3545;
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+    }
+</style>
