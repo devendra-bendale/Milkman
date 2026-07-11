@@ -38,5 +38,20 @@ namespace Milkman2.Features.LogIn
                 return claim == null ? null : int.Parse(claim.Value);
             }
         }
+
+        public bool IsPreOrderApplicable
+        {
+            get
+            {
+                var authState = _authenticationStateProvider
+                    .GetAuthenticationStateAsync()
+                    .GetAwaiter()
+                    .GetResult();
+
+                var claim = authState.User.FindFirst(ClaimTypes.Role);
+
+                return claim == null ? false : bool.Parse(claim.Value);
+            }
+        }
     }
 }

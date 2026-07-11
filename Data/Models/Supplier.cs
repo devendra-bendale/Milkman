@@ -27,6 +27,10 @@ namespace Milkman2.Data.Models
         [MaxLength(10)]
         public string UserPassword { get; set; } = string.Empty;
 
+        //If the user is allowed to take pre-orders for customers, then this property will be true. Otherwise, it will be false.
+        //if its true then for evening orders next day daily entry will be created for the customer. If its false then for evening orders next day daily entry will not be created for the customer.
+        public bool IsPreOrderApplicable { get; set; } = false;
+
         public bool IsPasswordActivated { get; set; } = false;
 
         public bool IsActive { get; set; } = true;

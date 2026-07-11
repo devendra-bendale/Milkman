@@ -57,7 +57,7 @@
         var response = await LogInService.ValidateUserCredentials(loginRequestDto.UserName, loginRequestDto.Password);
         if (response != null)
         {
-            var loginUser = new LoggedInUser(response.Id, response.FullName);
+            var loginUser = new LoggedInUser(response.Id, response.FullName, response.IsPreOrderApplicable);
             var loginResponse = new LoginResponseDto(loginUser, "");
             customAuthenticationStateProvider.Login(loginResponse);
 

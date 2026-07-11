@@ -19,11 +19,12 @@ namespace Milkman2.Features.LogIn
         public string Password { get; set; } = string.Empty;
     }
 
-    public record LoggedInUser(int Id, string Name)
+    public record LoggedInUser(int Id, string Name, bool IsPreOrderApplicable)
     {
         public Claim[] ToClaims() => [
             new Claim(ClaimTypes.NameIdentifier, Id.ToString()),
-            new Claim(ClaimTypes.Name, Name)
+            new Claim(ClaimTypes.Name, Name),
+            new Claim(ClaimTypes.Role, IsPreOrderApplicable.ToString())
             ];
 
         public static LoggedInUser? FromClaimsPrinciple(ClaimsPrincipal principal)
@@ -32,8 +33,9 @@ namespace Milkman2.Features.LogIn
             {
                 var id = Convert.ToInt32(principal.FindFirst(ClaimTypes.NameIdentifier)!.Value);
                 var name = principal.FindFirst(ClaimTypes.Name)!.Value;
+                var isPreOrderApplicable = Convert.ToBoolean(principal.FindFirst(ClaimTypes.Role)!.Value);
 
-                return new(id, name);
+                return new(id, name, isPreOrderApplicable);
             }
             return null;
         }

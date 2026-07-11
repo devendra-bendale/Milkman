@@ -40,6 +40,7 @@ namespace Milkman2.Features.DailyEntry
                     .Include(x => x.MilkType)
                     .Where(c => c.IsActive && c.Customer.UserId == _userId)
                     .OrderByDescending(x => x.Date)
+                    .ThenBy(x=>x.Customer.Name)
                     .AsNoTracking()
                     .Select(x => new DailyEntryViewModel
                     {
@@ -59,6 +60,7 @@ namespace Milkman2.Features.DailyEntry
                     .Include(x => x.MilkType)
                     .Where(x => x.Date == DateOnly.FromDateTime(DateTime.Today) && x.IsActive && x.Customer.UserId == _userId)
                     .OrderByDescending(x => x.Date)
+                    .ThenBy(x => x.Customer.Name)
                     .AsNoTracking()
                     .Select(x => new DailyEntryViewModel
                     {
@@ -158,18 +160,34 @@ namespace Milkman2.Features.DailyEntry
             await context.SaveChangesAsync();
         }
 
-        public async Task AddDailyEntriesForAllCustomers()
+        public async Task AddDailyEntriesForAllCustomers(bool isMorningOrder = false, bool isPreOrderApplicable = false)
         {
+            var date = DateOnly.FromDateTime(DateTime.Today);
+
+            if (!isMorningOrder && isPreOrderApplicable)
+                date = DateOnly.FromDateTime(DateTime.Today).AddDays(1);
+
+            //check if daily entry is already added for date
+            await using var contextCheck = await _contextFactory.CreateDbContextAsync();
+
+            var existingEntries = await contextCheck.CustomerDailyEntries
+                .Include(x => x.Customer)
+                .Where(x => x.Date == date && x.Customer.UserId == _userId)
+                .ToListAsync();
+
+            if (existingEntries.Any())
+                return;
+
             List<CustomerDailyEntry> customerDailyEntries = new List<CustomerDailyEntry>();
 
             var salesOrders = await _salesOrderService.GetAllAsync();
-            salesOrders = salesOrders.Where(s=>s.StartDate <= DateOnly.FromDateTime(DateTime.Today)).ToList();
+            salesOrders = salesOrders.Where(s => s.StartDate <= DateOnly.FromDateTime(DateTime.Today)).ToList();
 
             foreach (var salesOrder in salesOrders)
             {
                 customerDailyEntries.Add(new CustomerDailyEntry()
                 {
-                    Date = DateOnly.FromDateTime(DateTime.Today),
+                    Date = date,
                     CustomerId = salesOrder.CustomerId,
                     MilkTypeId = salesOrder.MilkTypeId,
                     Quantity = salesOrder.Quantity,

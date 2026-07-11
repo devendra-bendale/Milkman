@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Milkman2.Data;
 using Milkman2.Data.Models;
+using Milkman2.Features.DailyEntry;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,10 +16,12 @@ namespace Milkman2.Features.LogIn
         private readonly DataContext _context;
         private const string USER_SESSION_STORAGE_KEY = "user_account_session";
         private UserAccountSession? _userAccountSession;
+        private readonly DailyEntryService _dailyEntryService;
 
-        public LogInService(DataContext context)
+        public LogInService(DataContext context, DailyEntryService dailyEntryService)
         {
             _context = context;
+            _dailyEntryService = dailyEntryService;
         }
 
         public UserAccountSession? UserAccountSession => _userAccountSession;
@@ -54,7 +57,8 @@ namespace Milkman2.Features.LogIn
                 _userAccountSession = new UserAccountSession
                 {
                     UserId = userAccount.Id,
-                    UserName = userAccount.UserName
+                    UserName = userAccount.UserName,
+                    IsPreOrderApplicable = userAccount.IsPreOrderApplicable
                 };
                 return userAccount;
             }

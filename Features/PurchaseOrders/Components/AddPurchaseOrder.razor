@@ -168,7 +168,7 @@
         var selected = milkTypes.FirstOrDefault(m => m.Id == newOrder.MilkTypeId);
         if (selected is not null)
         {
-            newOrder.Rate = selected.SalesRate;
+            newOrder.Rate = selected.PurchaseRate;
             StateHasChanged();
         }
 

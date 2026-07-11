@@ -46,6 +46,31 @@ namespace Milkman2.Services.SalesOrders
                 .ToListAsync();
         }
 
+        public async Task<List<SalesOrderViewModel>> GetAllForDailyOrderAsync()
+        {
+            _userId = _currentUser.UserId ?? 0;
+
+            return await _context.SalesOrders
+                .Include(x => x.Customer)
+                .Include(x => x.MilkType)
+                .Where(x => x.IsActive && x.Customer.UserId == _userId)
+                .AsNoTracking()
+                .OrderBy(x => x.StartDate)
+                .Select(x => new SalesOrderViewModel
+                {
+                    Id = x.Id,
+                    StartDate = x.StartDate,
+                    CustomerId = x.CustomerId,
+                    CustomerName = x.Customer.Name,
+                    MilkTypeId = x.MilkTypeId,
+                    MilkTypeName = x.MilkType.TypeName,
+                    Frequency = x.Frequency,
+                    Quantity = x.Quantity,
+                    Rate = x.Rate
+                })
+                .ToListAsync();
+        }
+
         public async Task<SalesOrderViewModel?> GetBySOIdAsync(int soId)
         {
             _userId = _currentUser.UserId ?? 0;

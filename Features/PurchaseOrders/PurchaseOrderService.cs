@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Milkman2.Data;
 using Milkman2.Data.Models;
+using Milkman2.Features.DailyEntry;
 using Milkman2.Features.LogIn;
 using System;
 using System.Collections.Generic;
@@ -13,12 +14,14 @@ namespace Milkman2.Features.PurchaseOrders
     {
         private readonly IDbContextFactory<DataContext> _contextFactory;
         private readonly ICurrentUserService _currentUser;
+        private readonly DailyEntryService _dailyEntryService;
         private int _userId;
 
-        public PurchaseOrderService(IDbContextFactory<DataContext> contextFactory, ICurrentUserService currentUser)
+        public PurchaseOrderService(IDbContextFactory<DataContext> contextFactory, ICurrentUserService currentUser, DailyEntryService dailyEntryService)
         {
             _contextFactory = contextFactory;
             _currentUser = currentUser;
+            _dailyEntryService = dailyEntryService;
         }
 
         public async Task<List<PurchaseOrderViewModel>> GetAllAsync()
@@ -97,6 +100,8 @@ namespace Milkman2.Features.PurchaseOrders
 
         public async Task AddAsync(PurchaseOrderViewModel model)
         {
+            var isPreOrderApplicable = _currentUser.IsPreOrderApplicable;
+
             var entity = new PurchaseOrder
             {
                 Date = model.Date,
@@ -113,6 +118,8 @@ namespace Milkman2.Features.PurchaseOrders
             context.PurchaseOrders.Add(entity);
 
             await context.SaveChangesAsync();
+
+            await _dailyEntryService.AddDailyEntriesForAllCustomers(model.IsMorningOrder, isPreOrderApplicable);
         }
 
         public async Task UpdateAsync(PurchaseOrderViewModel model)

@@ -10,5 +10,6 @@ namespace Milkman2.Features.LogIn
     {
         public string UserName { get; set; }
         public int UserId { get; set; }
+        public bool IsPreOrderApplicable { get; set; }
     }
 }
