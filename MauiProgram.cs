@@ -32,9 +32,18 @@ namespace Milkman2
     		builder.Services.AddBlazorWebViewDeveloperTools();
     		builder.Logging.AddDebug();
 #endif
+
             builder.Services.AddDbContextFactory<DataContext>(options =>
             {
-                options.UseNpgsql("User Id=postgres.jmksayjmurtaejyyqjhf;Password=$cjGd*MFj5sQLM@;Server=aws-1-ap-southeast-2.pooler.supabase.com;Port=5432;Database=postgres");
+                options.UseNpgsql(
+                    "User Id=postgres.jmksayjmurtaejyyqjhf;Password=$cjGd*MFj5sQLM@;Server=aws-1-ap-southeast-2.pooler.supabase.com;Port=5432;Database=postgres;Pooling=false;",
+                    npgsqlOptions =>
+                    {
+                        npgsqlOptions.EnableRetryOnFailure(
+                            maxRetryCount: 3,
+                            maxRetryDelay: TimeSpan.FromSeconds(5),
+                            errorCodesToAdd: null);
+                    });
             });
 
             builder.Services.AddScoped<CustomerService>();

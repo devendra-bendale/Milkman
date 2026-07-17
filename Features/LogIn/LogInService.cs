@@ -13,14 +13,14 @@ namespace Milkman2.Features.LogIn
 {
     public class LogInService
     {
-        private readonly DataContext _context;
+        private readonly IDbContextFactory<DataContext> _contextFactory;
         private const string USER_SESSION_STORAGE_KEY = "user_account_session";
         private UserAccountSession? _userAccountSession;
         private readonly DailyEntryService _dailyEntryService;
 
-        public LogInService(DataContext context, DailyEntryService dailyEntryService)
+        public LogInService(IDbContextFactory<DataContext> contextFactory, DailyEntryService dailyEntryService)
         {
-            _context = context;
+            _contextFactory = contextFactory;
             _dailyEntryService = dailyEntryService;
         }
 
@@ -50,8 +50,9 @@ namespace Milkman2.Features.LogIn
 
         public async Task<UserAccount> ValidateUserCredentials(string username, string password)
         {
+            await using var _context = await _contextFactory.CreateDbContextAsync();
             var userAccount = await _context.UserAccounts
-                .FirstOrDefaultAsync(u => u.UserName == username && u.UserPassword == password);
+                .FirstOrDefaultAsync(u => u.UserName == username && u.UserPassword == password && u.IsActive);
             if (userAccount != null)
             {
                 _userAccountSession = new UserAccountSession

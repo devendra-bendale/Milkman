@@ -78,7 +78,7 @@ namespace Milkman2.Features.PurchaseOrders
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<List<MilkQuantityViewModel>> GetPurchasedQuantity()
+        public async Task<List<MilkQuantityViewModel>> GetMorningPurchasedQuantity()
         {
             _userId = _currentUser.UserId ?? 0;
             await using var context = await _contextFactory.CreateDbContextAsync();
@@ -86,7 +86,31 @@ namespace Milkman2.Features.PurchaseOrders
             return await context.PurchaseOrders
                 .Include(x => x.MilkType)
                 .Include(x => x.Supplier)
-                .Where(x => x.Date == DateOnly.FromDateTime(DateTime.Today) && x.IsActive && x.Supplier.UserId == _userId)
+                .Where(x => (_currentUser.IsPreOrderApplicable ? x.IsMorningOrder : true) && x.Date == DateOnly.FromDateTime(DateTime.Today) && x.IsActive && x.Supplier.UserId == _userId)
+                .AsNoTracking()
+                .GroupBy(x => new { x.MilkTypeId, MilkTypeName = x.MilkType != null ? x.MilkType.TypeName : string.Empty })
+                .Select(g => new MilkQuantityViewModel
+                {
+                    MilkTypeId = g.Key.MilkTypeId,
+                    MilkTypeName = g.Key.MilkTypeName,
+                    Quantity = g.Sum(p => p.Quantity)
+                })
+                .ToListAsync();
+        }
+
+        public async Task<List<MilkQuantityViewModel>> GetEveningPurchasedQuantity()
+        {
+            _userId = _currentUser.UserId ?? 0;
+            await using var context = await _contextFactory.CreateDbContextAsync();
+
+            return await context.PurchaseOrders
+                .Include(x => x.MilkType)
+                .Include(x => x.Supplier)
+                .Where(x => _currentUser.IsPreOrderApplicable 
+                    && x.Date == DateOnly.FromDateTime(DateTime.Today).AddDays(-1) 
+                    && !x.IsMorningOrder
+                    && x.IsActive 
+                    && x.Supplier.UserId == _userId)
                 .AsNoTracking()
                 .GroupBy(x => new { x.MilkTypeId, MilkTypeName = x.MilkType != null ? x.MilkType.TypeName : string.Empty })
                 .Select(g => new MilkQuantityViewModel

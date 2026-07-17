@@ -10,20 +10,21 @@ namespace Milkman2.Features.Suppliers
 {
     public class SupplierService
     {
-        private readonly DataContext _context;
+        private readonly IDbContextFactory<DataContext> _contextFactory;
         private readonly ICurrentUserService _currentUser;
         private int _userId;
 
         public SupplierService(
-            DataContext context,
+            IDbContextFactory<DataContext> contextFactory,
             ICurrentUserService currentUser)
         {
-            _context = context;
+            _contextFactory = contextFactory;
             _currentUser = currentUser;
         }
 
         public async Task<List<SupplierViewModel>> GetAllAsync()
         {
+            await using var _context = await _contextFactory.CreateDbContextAsync();
             _userId = _currentUser.UserId ?? 0;
 
             return await _context.Suppliers
@@ -49,7 +50,8 @@ namespace Milkman2.Features.Suppliers
                 IsActive = true,
                 UserId = _userId
             };
-
+            
+            await using var _context = await _contextFactory.CreateDbContextAsync();
             _context.Suppliers.Add(entity);
 
             await _context.SaveChangesAsync();
@@ -57,6 +59,7 @@ namespace Milkman2.Features.Suppliers
 
         public async Task UpdateAsync(SupplierViewModel model)
         {
+            await using var _context = await _contextFactory.CreateDbContextAsync();
             var entity = await _context.Suppliers.FirstOrDefaultAsync(x => x.Id == model.Id);
 
             if (entity == null)
@@ -72,6 +75,7 @@ namespace Milkman2.Features.Suppliers
 
         public async Task DeleteAsync(int id)
         {
+            await using var _context = await _contextFactory.CreateDbContextAsync();
             var entity = await _context.Suppliers.FindAsync(id);
 
             //if (entity != null)

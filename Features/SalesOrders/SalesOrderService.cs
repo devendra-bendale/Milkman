@@ -11,18 +11,19 @@ namespace Milkman2.Services.SalesOrders
 {
     public class SalesOrderService
     {
-        private readonly DataContext _context;
+        private readonly IDbContextFactory<DataContext> _contextFactory;
         private readonly ICurrentUserService _currentUser;
         private int _userId;
 
-        public SalesOrderService(DataContext context, ICurrentUserService currentUser)
+        public SalesOrderService(IDbContextFactory<DataContext> contextFactory, ICurrentUserService currentUser)
         {
-            _context = context;
+            _contextFactory = contextFactory;
             _currentUser = currentUser;
         }
 
         public async Task<List<SalesOrderViewModel>> GetAllAsync()
         {
+            await using var _context = await _contextFactory.CreateDbContextAsync();
             _userId = _currentUser.UserId ?? 0;
 
             return await _context.SalesOrders
@@ -49,7 +50,9 @@ namespace Milkman2.Services.SalesOrders
         public async Task<List<SalesOrderViewModel>> GetAllForDailyOrderAsync()
         {
             _userId = _currentUser.UserId ?? 0;
-
+            
+            await using var _context = await _contextFactory.CreateDbContextAsync();
+    
             return await _context.SalesOrders
                 .Include(x => x.Customer)
                 .Include(x => x.MilkType)
@@ -74,6 +77,7 @@ namespace Milkman2.Services.SalesOrders
         public async Task<SalesOrderViewModel?> GetBySOIdAsync(int soId)
         {
             _userId = _currentUser.UserId ?? 0;
+            await using var _context = await _contextFactory.CreateDbContextAsync();
             return await _context.SalesOrders
                 .Include(x => x.Customer)
                 .Include(x => x.MilkType)
@@ -107,7 +111,7 @@ namespace Milkman2.Services.SalesOrders
                 Rate = model.Rate,
                 IsActive = true
             };
-
+            await using var _context = await _contextFactory.CreateDbContextAsync();
             _context.SalesOrders.Add(entity);
 
             await _context.SaveChangesAsync();
@@ -116,6 +120,8 @@ namespace Milkman2.Services.SalesOrders
         public async Task UpdateAsync(SalesOrderViewModel model)
         {
             _userId = _currentUser.UserId ?? 0;
+            await using var _context = await _contextFactory.CreateDbContextAsync();
+
             var entity = await _context.SalesOrders
                 .Include(x => x.Customer)
                 .Include(x => x.MilkType)
@@ -138,6 +144,7 @@ namespace Milkman2.Services.SalesOrders
 
         public async Task DeleteAsync(int id)
         {
+            await using var _context = await _contextFactory.CreateDbContextAsync();
             var entity = await _context.SalesOrders.FindAsync(id);
 
             //if (entity != null)

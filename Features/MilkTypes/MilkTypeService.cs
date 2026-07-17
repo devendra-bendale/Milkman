@@ -13,21 +13,22 @@ namespace Milkman2.Features.MilkTypes
 {
     public class MilkTypeService
     {
-        private readonly DataContext _context;
+        private readonly IDbContextFactory<DataContext> _contextFactory;
         private readonly ICurrentUserService _currentUser;
         private int _userId;
 
         public MilkTypeService(
-            DataContext context,
+            IDbContextFactory<DataContext> contextFactory,
             ICurrentUserService currentUser)
         {
-            _context = context;
+            _contextFactory = contextFactory;
             _currentUser = currentUser;            
         }
 
         public async Task<List<MilkTypeViewModel>> GetAllAsync()
         {
             _userId = _currentUser.UserId ?? 0;
+            await using var _context = await _contextFactory.CreateDbContextAsync();
 
             return await _context.MilkTypes
                 .Where(c => c.UserId == _userId)
@@ -54,7 +55,7 @@ namespace Milkman2.Features.MilkTypes
                 SalesRate = model.SalesRate,
                 UserId = _userId
             };
-
+            await using var _context = await _contextFactory.CreateDbContextAsync();
             _context.MilkTypes.Add(entity);
 
             await _context.SaveChangesAsync();
@@ -62,6 +63,7 @@ namespace Milkman2.Features.MilkTypes
 
         public async Task UpdateAsync(MilkTypeViewModel model)
         {
+            await using var _context = await _contextFactory.CreateDbContextAsync();
             var entity = await _context.MilkTypes.FirstOrDefaultAsync(x => x.Id == model.Id);
 
             if (entity == null)
@@ -78,6 +80,7 @@ namespace Milkman2.Features.MilkTypes
 
         public async Task DeleteAsync(int id)
         {
+            await using var _context = await _contextFactory.CreateDbContextAsync();
             var entity = await _context.MilkTypes.FindAsync(id);
 
             if (entity != null)

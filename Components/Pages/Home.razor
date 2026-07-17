@@ -32,6 +32,8 @@
 
 @code {
     private List<MilkQuantityViewModel> purchasedQuantity = new();
+    private List<MilkQuantityViewModel> morningQuantity = new();
+    private List<MilkQuantityViewModel> eveningQuantity = new();
     private List<MilkQuantityViewModel> soldQuantity = new();
 
     protected override async Task OnInitializedAsync()
@@ -41,7 +43,22 @@
 
     public async Task LoadAsync()
     {
-        purchasedQuantity = await purchaseOrderService.GetPurchasedQuantity();
+        morningQuantity = await purchaseOrderService.GetMorningPurchasedQuantity();
+        eveningQuantity = await purchaseOrderService.GetEveningPurchasedQuantity();
+
+        // Merge morning and evening purchased quantities and group by milk type
+        purchasedQuantity = morningQuantity
+            .Concat(eveningQuantity)
+            .Where(x => x != null)
+            .GroupBy(x => new { x.MilkTypeId, x.MilkTypeName })
+            .Select(g => new MilkQuantityViewModel
+            {
+                MilkTypeId = g.Key.MilkTypeId,
+                MilkTypeName = g.Key.MilkTypeName,
+                Quantity = g.Sum(x => x.Quantity)
+            })
+            .ToList();
+
         soldQuantity = await dailyEntryService.GetSoldQuantity();
 
         StateHasChanged();

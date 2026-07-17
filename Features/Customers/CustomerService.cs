@@ -10,21 +10,22 @@ namespace Milkman2.Features.Customers
 {
     public class CustomerService
     {
-        private readonly DataContext _context;
+        private readonly IDbContextFactory<DataContext> _contextFactory;
         private readonly ICurrentUserService _currentUser;
         private int _userId;
 
         public CustomerService(
-        DataContext context,
+            IDbContextFactory<DataContext> contextFactory,
         ICurrentUserService currentUser)
         {
-            _context = context;
+            _contextFactory = contextFactory;
             _currentUser = currentUser;
         }
 
         public async Task<List<CustomerViewModel>> GetAllAsync()
         {
-            _userId = _currentUser.UserId ?? 0; 
+            _userId = _currentUser.UserId ?? 0;
+            await using var _context = await _contextFactory.CreateDbContextAsync();
             return await _context.Customers
                 .Where(c=>c.IsActive && c.UserId == _userId)
                 .AsNoTracking()
@@ -53,6 +54,7 @@ namespace Milkman2.Features.Customers
                 UserId = _userId,
             };
 
+            await using var _context = await _contextFactory.CreateDbContextAsync();
             _context.Customers.Add(entity);
 
             await _context.SaveChangesAsync();
@@ -60,6 +62,7 @@ namespace Milkman2.Features.Customers
 
         public async Task UpdateAsync(CustomerViewModel model)
         {
+            await using var _context = await _contextFactory.CreateDbContextAsync();
             var entity = await _context.Customers.FirstOrDefaultAsync(x => x.Id == model.Id);
 
             if (entity == null)
@@ -76,6 +79,7 @@ namespace Milkman2.Features.Customers
 
         public async Task DeleteAsync(int id)
         {
+            await using var _context = await _contextFactory.CreateDbContextAsync();
             var entity = await _context.Customers.FindAsync(id);
 
             //if (entity != null)
