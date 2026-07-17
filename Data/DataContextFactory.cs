@@ -18,7 +18,15 @@ namespace Milkman2.Data
             //    .Options;
 
             var options = new DbContextOptionsBuilder<DataContext>();
-            options.UseNpgsql("User Id=postgres.jmksayjmurtaejyyqjhf;Password=$cjGd*MFj5sQLM@;Server=aws-1-ap-southeast-2.pooler.supabase.com;Port=5432;Database=postgres;Pooling=false;");
+            options.UseNpgsql(
+                    "User Id=postgres.jmksayjmurtaejyyqjhf;Password=$cjGd*MFj5sQLM@;Server=aws-1-ap-southeast-2.pooler.supabase.com;Port=5432;Database=postgres;Pooling=false;",
+                    npgsqlOptions =>
+                    {
+                        npgsqlOptions.EnableRetryOnFailure(
+                            maxRetryCount: 3,
+                            maxRetryDelay: TimeSpan.FromSeconds(5),
+                            errorCodesToAdd: null);
+                    });
 
             return new DataContext(options.Options);
         }
