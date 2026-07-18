@@ -69,6 +69,9 @@
 }
 
 @code {
+    [Parameter]
+    public EventCallback<bool> OnLoadingChanged { get; set; }
+
     private DateOnly startDate = DateOnly.FromDateTime(
         new DateTime(
             DateTime.Today.Year,
@@ -94,8 +97,9 @@
 
     private async Task GetReport()
     {
+        await OnLoadingChanged.InvokeAsync(true);
         supplierMasterReportViewModels = await ReportService.GetSupplierMasterReportAsync(startDate, endDate);
-        StateHasChanged();
+        await OnLoadingChanged.InvokeAsync(false);
     }
 
     private IEnumerable<SupplierMasterReportViewModel> FilteredSuppliers

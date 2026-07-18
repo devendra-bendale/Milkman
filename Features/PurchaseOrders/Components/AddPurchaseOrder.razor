@@ -88,7 +88,14 @@
     </EditForm>
 </div>
 
+<CustomOverlay @bind-Visible="isLoading" DarkBackground="true" AutoClose="false">
+    <div class="spinner"></div>
+    <p style="color: white; margin-top: 10px;">Processing, please wait...</p>
+</CustomOverlay>
+
 @code {
+    private bool isLoading = false;
+
     [Parameter]
     [SupplyParameterFromQuery]
     public int? poId { get; set; }
@@ -118,6 +125,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        isLoading = true;
         suppliers = await SupplierService.GetAllAsync();
         milkTypes = await MilkTypeService.GetAllAsync();
 
@@ -134,10 +142,12 @@
             suppliers = suppliers.Where(c => c.Id == supplierId.Value).ToList();
             newOrder.SupplierId = supplierId.Value;
         }
+        isLoading = false;
     }
 
     private async Task AddOrderAsync()
     {
+        isLoading = true;
         if (!poId.HasValue || poId.Value == 0)
         {
             await PurchaseOrderService.AddAsync(newOrder);
@@ -146,7 +156,7 @@
         {
             await PurchaseOrderService.UpdateAsync(newOrder);
         }
-
+        isLoading = false;
         navManager.NavigateTo("/listPurchaseOrders");
     }    
 

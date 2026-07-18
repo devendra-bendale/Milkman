@@ -1,3 +1,4 @@
+using Milkman2.Features.SalesOrders;
 using System.ComponentModel.DataAnnotations;
 
 namespace Milkman2.Features.Customers
@@ -17,5 +18,6 @@ namespace Milkman2.Features.Customers
         public string? Address { get; set; }
 
         public int NumberOfOrders { get; set; } = 0;
+        public List<SalesOrderViewModel> salesOrderViewModels { get; set; } = new();
     }
 }

@@ -1,22 +1,27 @@
-﻿@inject CustomerService CustomerService
+﻿
+@inject CustomerService CustomerService
 
-@if (customers is null)
-{
-    <p><em>Loading...</em></p>
-}
-else if (!customers.Any())
+<div class="row">
+    @* <button class="btn btn-primary rounded-circle shadow add-button" @onclick="AddNewOrder">
+        +
+    </button> *@
+
+    <div class="col-12">
+        <div class="my-3">
+            <input class="form-control"
+                   placeholder="Search by name or contact number..."
+                   value="@searchText"
+                   @oninput="OnSearchInput" />
+        </div>
+    </div>
+</div>
+
+@if (!customers.Any())
 {
     <p>No customers found.</p>
 }
 else
 {
-    <div class="mb-3">
-        <input class="form-control"
-               placeholder="Search by name or contact number..."
-               value="@searchText"
-               @oninput="OnSearchInput" />
-    </div>
-
     @if (!FilteredCustomers.Any())
     {
         <p>No customers match your search.</p>
@@ -35,14 +40,18 @@ else
         </div>
     }
 }
+
 @code {
     private List<CustomerViewModel> customers = new();
-
     private string searchText = string.Empty;
+    [Parameter]
+    public EventCallback<bool> OnLoadingChanged { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
+        await OnLoadingChanged.InvokeAsync(true);
         await LoadAsync();
+        await OnLoadingChanged.InvokeAsync(false);
     }
 
     private IEnumerable<CustomerViewModel> FilteredCustomers
@@ -63,7 +72,7 @@ else
     public async Task LoadAsync()
     {
         customers = await CustomerService.GetAllAsync();
-        StateHasChanged();
+        StateHasChanged();        
     }
 
     private void OnSearchInput(ChangeEventArgs e)
@@ -74,16 +83,25 @@ else
 
     private async Task HandleSave(CustomerViewModel model)
     {
+        await OnLoadingChanged.InvokeAsync(true);
         await CustomerService.UpdateAsync(model);
-
         await LoadAsync();
-        StateHasChanged();
+        await OnLoadingChanged.InvokeAsync(false);
     }
 
     private async Task HandleDelete(int id)
     {
-        await CustomerService.DeleteAsync(id);
-        await LoadAsync();
-        StateHasChanged();
+        bool result = await Application.Current.MainPage.DisplayAlert(
+                        "Delete",
+                        "Are you sure you want to delete this Customer?",
+                        "Yes",
+                        "No");
+        if (result)
+        {
+            await OnLoadingChanged.InvokeAsync(true);
+            await CustomerService.DeleteAsync(id);
+            await LoadAsync();
+            await OnLoadingChanged.InvokeAsync(false);
+        }
     }
 }

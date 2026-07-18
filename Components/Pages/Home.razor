@@ -1,5 +1,6 @@
 ﻿@page "/"
 @using Microsoft.AspNetCore.Authorization
+@using Milkman2.Components.Custom
 @using Milkman2.Features.DailyEntry
 @using Milkman2.Features.PurchaseOrders
 @inject PurchaseOrderService purchaseOrderService
@@ -29,8 +30,13 @@
         </div>
     }
 </div>
+<CustomOverlay @bind-Visible="isLoading" DarkBackground="true" AutoClose="false">
+    <div class="spinner"></div>
+    <p style="color: white; margin-top: 10px;">Processing, please wait...</p>
+</CustomOverlay>
 
 @code {
+    private bool isLoading = false;
     private List<MilkQuantityViewModel> purchasedQuantity = new();
     private List<MilkQuantityViewModel> morningQuantity = new();
     private List<MilkQuantityViewModel> eveningQuantity = new();
@@ -43,6 +49,7 @@
 
     public async Task LoadAsync()
     {
+        isLoading = true;
         morningQuantity = await purchaseOrderService.GetMorningPurchasedQuantity();
         eveningQuantity = await purchaseOrderService.GetEveningPurchasedQuantity();
 
@@ -60,7 +67,7 @@
             .ToList();
 
         soldQuantity = await dailyEntryService.GetSoldQuantity();
-
+        isLoading = false;
         StateHasChanged();
     }
 }

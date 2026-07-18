@@ -52,6 +52,15 @@ namespace Milkman2.Features.Customers
                 Address = model.Address,
                 IsActive = true,
                 UserId = _userId,
+                SalesOrders = model.salesOrderViewModels.Select(o => new SalesOrder
+                {
+                    StartDate = o.StartDate,
+                    MilkTypeId = o.MilkTypeId,
+                    Frequency = o.Frequency,
+                    Quantity = o.Quantity,
+                    Rate = o.Rate,
+                    IsActive = true
+                }).ToList()
             };
 
             await using var _context = await _contextFactory.CreateDbContextAsync();

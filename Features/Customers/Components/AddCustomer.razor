@@ -1,7 +1,21 @@
 ﻿@page "/add-customer"
 
+@using Milkman2.Data.Models
 @using Milkman2.Features.Customers
+@using Milkman2.Features.MilkTypes
+@using Milkman2.Features.SalesOrders
+@inject NavigationManager navigationManager
 @inject CustomerService CustomerService
+@inject MilkTypeService MilkTypeService
+
+<SectionContent SectionName="pageTitle">
+    <div class="d-flex justify-content-between align-items-center">
+        Add Customer
+        <button class="btn btn-success" @onclick="Back">
+            Back
+        </button>
+    </div>
+</SectionContent>
 
 <div class="card shadow-sm border-0 mb-4">
     <div class="card-body">
@@ -23,33 +37,109 @@
                 <label>Address</label>
                 <InputText class="form-control" @bind-Value="model.Address" />
             </div>
+            <hr />
+            <div class="mb-2">
+                <label>Milk Type</label>
+                <InputSelect class="form-control" @bind-Value="SelectedMilkTypeId" TValue="int">
+                    <option value="0">Select MilkType</option>
+                    @foreach (var m in milkTypes)
+                    {
+                        <option value="@m.Id">@m.TypeName</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="@(() => newOrder.MilkTypeId)" />
+            </div>
+            <div class="mb-2" style="display:none">
+                <label>Delivery Frequency</label>
+                <InputSelect class="form-control" @bind-Value="newOrder.Frequency" TValue="DeliveryFrequency">
+                    @foreach (var f in Enum.GetValues<DeliveryFrequency>())
+                    {
+                        <option value="@f">@f</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="@(() => newOrder.Frequency)" />
+            </div>
+            <div class="mb-2">
+                <label>Quantity</label>
+                <InputNumber class="form-control" @bind-Value="newOrder.Quantity" />
+            </div>
+            <div class="mb-2">
+                <label>Rate</label>
+                <InputNumber class="form-control" @bind-Value="newOrder.Rate" />
+            </div>
+            
+            <div class="mb-2">
+                <label>Date</label>
+                <InputDate class="form-control" @bind-Value="newOrder.StartDate" />
+            </div>
             <button class="btn btn-success">
                 Save
             </button>
 
-            <button type="button" class="btn btn-secondary ms-2" @onclick="Cancel">
+            <button type="button" class="btn btn-secondary ms-2" @onclick="Back">
                 Cancel
             </button>
         </EditForm>
     </div>
 </div>
+<CustomOverlay @bind-Visible="isLoading" DarkBackground="true" AutoClose="false">
+    <div class="spinner"></div>
+    <p style="color: white; margin-top: 10px;">Processing, please wait...</p>
+</CustomOverlay>
 
 @code {
-    [Parameter]
-    public EventCallback OnCustomerAdded { get; set; }
+    private bool isLoading = false;
 
     private CustomerViewModel model = new();
+    private SalesOrderViewModel newOrder = new();
+
+    private List<MilkTypeViewModel> milkTypes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        milkTypes = await MilkTypeService.GetAllAsync();
+        isLoading = false;
+    }
 
     private async Task SaveAsync()
     {
-        await CustomerService.AddAsync(model);
+        isLoading = true;
+        if(newOrder.MilkTypeId != 0 && newOrder.Quantity !=0 )
+            model.salesOrderViewModels.Add(newOrder);
 
-        await OnCustomerAdded.InvokeAsync();
-        model = new();
+        await CustomerService.AddAsync(model);
+        isLoading = false;
+        navigationManager.NavigateTo("/customers");
     }
 
-    private void Cancel()
+    private int SelectedMilkTypeId
     {
-        model = new();
+        get => newOrder.MilkTypeId;
+        set
+        {
+            if (newOrder.MilkTypeId != value)
+            {
+                newOrder.MilkTypeId = value;
+                SetAmountAsync();
+            }
+        }
+    }
+
+    private Task SetAmountAsync()
+    {
+        var selected = milkTypes.FirstOrDefault(m => m.Id == newOrder.MilkTypeId);
+        if (selected is not null)
+        {
+            newOrder.Rate = selected.SalesRate;
+            StateHasChanged();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void Back()
+    {
+        navigationManager.NavigateTo("/customers");
     }
 }

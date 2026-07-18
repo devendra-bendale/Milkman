@@ -36,13 +36,18 @@ else
     }
 }
 @code {
+    
     private List<SupplierViewModel> suppliers = new();
+    [Parameter]
+    public EventCallback<bool> OnLoadingChanged { get; set; }
 
     private string searchText = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
+        await OnLoadingChanged.InvokeAsync(true);
         await LoadAsync();
+        await OnLoadingChanged.InvokeAsync(false);
     }
 
     private IEnumerable<SupplierViewModel> FilteredSuppliers
@@ -74,16 +79,26 @@ else
 
     private async Task HandleSave(SupplierViewModel model)
     {
+        await OnLoadingChanged.InvokeAsync(true);
         await SupplierService.UpdateAsync(model);
-
         await LoadAsync();
-        StateHasChanged();
+        await OnLoadingChanged.InvokeAsync(false);
     }
 
     private async Task HandleDelete(int id)
     {
-        await SupplierService.DeleteAsync(id);
-        await LoadAsync();
-        StateHasChanged();
+        bool result = await Application.Current.MainPage.DisplayAlert(
+                        "Delete",
+                        "Are you sure you want to delete this Supplier?",
+                        "Yes",
+                        "No");
+
+        if (result)
+        {            
+            await OnLoadingChanged.InvokeAsync(true);
+            await SupplierService.DeleteAsync(id);
+            await LoadAsync();
+            await OnLoadingChanged.InvokeAsync(false);
+        }
     }
 }

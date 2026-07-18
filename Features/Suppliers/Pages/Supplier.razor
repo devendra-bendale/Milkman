@@ -3,14 +3,28 @@
 <SectionContent SectionName="pageTitle">
     Suppliers
 </SectionContent>
-<AddSupplier OnSupplierAdded="HandleSupplierAdded"></AddSupplier>
+<AddSupplier OnSupplierAdded="HandleSupplierAdded" OnLoadingChanged="HandleLoadingChanged"></AddSupplier>
 <hr />
-<ListSupplier @ref="listSupplierComponent"></ListSupplier>
+<ListSupplier @ref="listSupplierComponent" OnLoadingChanged="HandleLoadingChanged"></ListSupplier>
+
+<CustomOverlay @bind-Visible="isLoading" DarkBackground="true" AutoClose="false">
+    <div class="spinner"></div>
+    <p style="color: white; margin-top: 10px;">Processing, please wait...</p>
+</CustomOverlay>
+
 @code {
     private ListSupplier? listSupplierComponent;
+    private bool isLoading = false;
 
     private async Task HandleSupplierAdded()
     {
         await listSupplierComponent!.LoadAsync();
+    }
+
+    private Task HandleLoadingChanged(bool loading)
+    {
+        isLoading = loading;
+        StateHasChanged();
+        return Task.CompletedTask;
     }
 }

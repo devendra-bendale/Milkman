@@ -4,15 +4,20 @@
 @inject NavigationManager navManager
 
 <SectionContent SectionName="pageTitle">
-    Customer Order
+    <div class="d-flex justify-content-between align-items-center">
+        Customer Order
+        <button class="btn btn-primary" @onclick="AddNewOrder">
+            Add
+        </button>
+    </div>
 </SectionContent>
 
 <div class="row">
-    <button class="btn btn-primary rounded-circle shadow add-button" @onclick="AddNewOrder">
+    @* <button class="btn btn-primary rounded-circle shadow add-button" @onclick="AddNewOrder">
         +
-    </button>
+    </button> *@
     <div class="col-12">
-        <div class="mb-3">
+        <div class="my-3">
             <input class="form-control"
                    placeholder="Search by customer name..."
                    value="@searchText"
@@ -20,11 +25,7 @@
         </div>
     </div>
 </div>
-@if (FilteredSalesOrder is null)
-{
-    <p><em>Loading...</em></p>
-}
-else if (!FilteredSalesOrder.Any())
+@if (!FilteredSalesOrder.Any())
 {
     <p>No customer order found.</p>
 }
@@ -58,13 +59,21 @@ else
     }
 }
 
+<CustomOverlay @bind-Visible="isLoading" DarkBackground="true" AutoClose="false">
+    <div class="spinner"></div>
+    <p style="color: white; margin-top: 10px;">Processing, please wait...</p>
+</CustomOverlay>
+
 @code {
+    private bool isLoading = false;
     private List<SalesOrderViewModel> salesOrders = new();
     private string searchText = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
+        isLoading = true;
         await LoadAsync();
+        isLoading = false;
     }
 
     public async Task LoadAsync()

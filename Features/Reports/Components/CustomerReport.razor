@@ -155,6 +155,9 @@
 }
 
 @code {
+    [Parameter]
+    public EventCallback<bool> OnLoadingChanged { get; set; }
+
     private DateOnly startDate = DateOnly.FromDateTime(
         new DateTime(
             DateTime.Today.Year,
@@ -174,7 +177,9 @@
 
     private async Task GetReport()
     {
+        await OnLoadingChanged.InvokeAsync(true);
         customerMasterReportViewModels = await ReportService.GetCustomerMasterReportAsync(startDate, endDate);
+        await OnLoadingChanged.InvokeAsync(false);
     }
 
     private IEnumerable<CustomerMasterReportViewModel> FilteredCustomers

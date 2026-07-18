@@ -1,0 +1,51 @@
+﻿@if (Visible)
+{
+    <div class="custom-overlay-backdrop @(DarkBackground ? "dark-bg" : "")" @onclick="HandleBackgroundClick">
+        <div class="custom-overlay-content" @onclick:stopPropagation>
+            @ChildContent
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public bool DarkBackground { get; set; } = true;
+    [Parameter] public bool AutoClose { get; set; } = false;
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private async Task HandleBackgroundClick()
+    {
+        if (AutoClose)
+        {
+            Visible = false;
+            await VisibleChanged.InvokeAsync(false);
+        }
+    }
+}
+<style>
+    .custom-overlay-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 1200; /* High z-index to sit on top of everything */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: auto; /* Captures all clicks */
+    }
+
+    .custom-overlay-backdrop.dark-bg {
+        background-color: rgba(0, 0, 0, 0.5); 
+        backdrop-filter: blur(2px); /* Modern blur effect */
+    }
+
+    .custom-overlay-content {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+</style>

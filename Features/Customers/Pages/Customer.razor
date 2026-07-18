@@ -1,20 +1,38 @@
 ﻿@page "/customers"
 @using Microsoft.AspNetCore.Authorization
 @using Milkman2.Features.Customers.Components
+@inject NavigationManager navigationManager
+
 @attribute [Authorize]
 
 <SectionContent SectionName="pageTitle">
-    Customers
+    <div class="d-flex justify-content-between align-items-center">
+        Customers
+        <button class="btn btn-primary" @onclick="OpenAddCustomer">
+            Add
+        </button>
+    </div>
 </SectionContent>
 
-<AddCustomer OnCustomerAdded="HandleCustomerAdded"></AddCustomer>
-<hr />
-<ListCustomer @ref="listCustomerComponent"></ListCustomer>
+<ListCustomer @ref="listCustomerComponent" OnLoadingChanged="HandleLoadingChanged"></ListCustomer>
+
+<CustomOverlay @bind-Visible="isLoading" DarkBackground="true" AutoClose="false">
+    <div class="spinner"></div>
+    <p style="color: white; margin-top: 10px;">Processing, please wait...</p>
+</CustomOverlay>
 @code {
     private ListCustomer? listCustomerComponent;
+    private bool isLoading = false;
 
-    private async Task HandleCustomerAdded()
+    private void OpenAddCustomer()
     {
-        await listCustomerComponent!.LoadAsync();        
+        navigationManager.NavigateTo("/add-customer");
+    }
+
+    private Task HandleLoadingChanged(bool loading)
+    {
+        isLoading = loading;
+        StateHasChanged();
+        return Task.CompletedTask;
     }
 }

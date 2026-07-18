@@ -6,52 +6,44 @@
 </SectionContent>
 
 <div class="card shadow-sm">
-
     <div class="card-header bg-white">
-
         <ul class="nav nav-tabs card-header-tabs">
-
             <li class="nav-item">
                 <button class="nav-link @(selectedTab == ReportTab.Customer ? "active" : "")"
                         @onclick='() => SelectTab(ReportTab.Customer)'>
-
                     Customer
-
                 </button>
             </li>
 
             <li class="nav-item">
                 <button class="nav-link @(selectedTab == ReportTab.Supplier ? "active" : "")"
                         @onclick='() => SelectTab(ReportTab.Supplier)'>
-
                     Supplier
-
                 </button>
             </li>
-
         </ul>
-
     </div>
-
     <div>
-
         @switch (selectedTab)
         {
             case ReportTab.Customer:
-                <CustomerReport />
+                <CustomerReport OnLoadingChanged="HandleLoadingChanged" />
                 break;
 
             case ReportTab.Supplier:
-                <SupplierReport />
+                <SupplierReport OnLoadingChanged="HandleLoadingChanged" />
                 break;
         }
-
     </div>
-
 </div>
 
-@code {
+<CustomOverlay @bind-Visible="isLoading" DarkBackground="true" AutoClose="false">
+    <div class="spinner"></div>
+    <p style="color: white; margin-top: 10px;">Processing, please wait...</p>
+</CustomOverlay>
 
+@code {
+    private bool isLoading = false;
     private ReportTab selectedTab = ReportTab.Customer;
 
     private void SelectTab(ReportTab tab)
@@ -63,5 +55,12 @@
     {
         Customer,
         Supplier
+    }
+
+    private Task HandleLoadingChanged(bool loading)
+    {
+        isLoading = loading;
+        StateHasChanged();
+        return Task.CompletedTask;
     }
 }

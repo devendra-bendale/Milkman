@@ -62,11 +62,17 @@
         </button>
     </EditForm>
 </div>
+<CustomOverlay @bind-Visible="isLoading" DarkBackground="true" AutoClose="false">
+    <div class="spinner"></div>
+    <p style="color: white; margin-top: 10px;">Processing, please wait...</p>
+</CustomOverlay>
 
 @code {
     [Parameter]
     [SupplyParameterFromQuery]
     public int? dailyEntryId { get; set; }
+
+    private bool isLoading = false;
 
     private string OperationName
     {
@@ -89,6 +95,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        isLoading = true;
         customers = await CustomerService.GetAllAsync();
         milkTypes = await MilkTypeService.GetAllAsync();
 
@@ -100,10 +107,12 @@
                 newEntry = existing;
             }
         }
+        isLoading = false;
     }
 
     private async Task AddDailyEntryAsync()
     {
+        isLoading = true;
         if (!dailyEntryId.HasValue || dailyEntryId.Value == 0)
         {
             await DailyEntryService.AddAsync(newEntry);
@@ -112,7 +121,7 @@
         {
             await DailyEntryService.UpdateAsync(newEntry);
         }
-
+        isLoading = false;
         navManager.NavigateTo("/listDailyEntries");
     }
 

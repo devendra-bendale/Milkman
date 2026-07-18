@@ -30,12 +30,16 @@
 @code {
     [Parameter]
     public EventCallback OnSupplierAdded { get; set; }
+    [Parameter]
+    public EventCallback<bool> OnLoadingChanged { get; set; }
 
     private SupplierViewModel model = new();
 
     private async Task SaveAsync()
     {
+        await OnLoadingChanged.InvokeAsync(true);
         await SupplierService.AddAsync(model);
+        await OnLoadingChanged.InvokeAsync(false);
         await OnSupplierAdded.InvokeAsync();
         model = new();
     }

@@ -4,14 +4,16 @@
 @inject NavigationManager navManager
 
 <SectionContent SectionName="pageTitle">
-    Daily Entry
+    <div class="d-flex justify-content-between align-items-center">
+        Daily Entry
+        <button class="btn btn-primary" @onclick="AddNewEntry">
+            Add
+        </button>
+    </div>
 </SectionContent>
 
 <div class="row">
-    <div class="col-3 d-flex align-items-center">
-        <button class="btn btn-primary rounded-circle shadow add-button" @onclick="AddNewEntry">
-            +
-        </button>
+    <div class="col-3 d-flex align-items-center my-3">
         <div class="form-check mb-0">
             <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" @onchange="OnDefaultChanged">
             <label class="form-check-label ms-1" for="flexCheckDefault">
@@ -19,8 +21,8 @@
             </label>
         </div>
     </div>
-    <div class="col-9">
-        <div class="mb-3">
+    <div class="col-9 my-3">
+        <div>
             <input class="form-control"
                    placeholder="Search by customer name..."
                    value="@searchText"
@@ -28,11 +30,7 @@
         </div>
     </div>
 </div>
-@if (FilteredDailyEntries is null)
-{
-    <p><em>Loading...</em></p>
-}
-else if (!FilteredDailyEntries.Any())
+@if (!FilteredDailyEntries.Any())
 {
     <p>No daily entry found.</p>
 }
@@ -60,13 +58,20 @@ else
         </div>
     }
 }
+<CustomOverlay @bind-Visible="isLoading" DarkBackground="true" AutoClose="false">
+    <div class="spinner"></div>
+    <p style="color: white; margin-top: 10px;">Processing, please wait...</p>
+</CustomOverlay>
 @code {
     private List<DailyEntryViewModel> dailyEntries = new();
     private string searchText = string.Empty;
+    private bool isLoading = false;
 
     protected override async Task OnInitializedAsync()
     {
+        isLoading = true;
         await LoadAsync();
+        isLoading = false;
     }
 
     public async Task LoadAsync(bool isAll = false)
@@ -97,7 +102,9 @@ else
 
     private async Task OnDefaultChanged(ChangeEventArgs e)
     {
+        isLoading = true;
         await LoadAsync((bool)e?.Value);
+        isLoading = false;
     }
 
     private void AddNewEntry()
@@ -107,9 +114,18 @@ else
 
     private async Task Cancel(int id)
     {
-        await dailyEntryService.DeleteAsync(id);
-        await LoadAsync();
-        StateHasChanged();
+        bool result = await Application.Current.MainPage.DisplayAlert(
+                        "Delete",
+                        "Are you sure you want to delete this record?",
+                        "Yes",
+                        "No");
+        if (result)
+        {
+            isLoading = true;
+            await dailyEntryService.DeleteAsync(id);
+            isLoading = false;
+            await LoadAsync();
+        }
     }
 
     private void EditOrder(int id)

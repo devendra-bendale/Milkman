@@ -94,10 +94,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Features\PurchaseOrders\Pages\" />
-    </ItemGroup>
-
-    <ItemGroup>
       <Content Update="wwwroot\images\appicon.svg">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
