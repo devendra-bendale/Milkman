@@ -27,7 +27,7 @@
                     <option value="@s.Id">@s.Name</option>
                 }
             </InputSelect>
-            <ValidationMessage For="@(() => newEntry.CustomerId)" />
+            <ValidationMessage For="@(() => newEntry.CustomerId)" class="validation-message" />
         </div>
         <div class="mb-2">
             <label>Milk Type</label>
@@ -38,7 +38,7 @@
                     <option value="@m.Id">@m.TypeName</option>
                 }
             </InputSelect>
-            <ValidationMessage For="@(() => newEntry.MilkTypeId)" />
+            <ValidationMessage For="@(() => newEntry.MilkTypeId)" class="validation-message" />
         </div>
         <div class="mb-2">
             <label>Quantity</label>
@@ -48,10 +48,6 @@
             <label>Rate @newEntry.Rate</label>
             <InputNumber class="form-control" @bind-Value="newEntry.Rate" />
         </div>
-        @* <div class="mb-2">
-            <label>Amount</label>
-            @newOrder.Amount
-        </div> *@
         <div class="mb-2">
             <label>Date</label>
             <InputDate class="form-control" @bind-Value="newEntry.Date" />

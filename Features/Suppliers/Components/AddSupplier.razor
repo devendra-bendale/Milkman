@@ -6,10 +6,10 @@
     <div class="card-body">
         <EditForm Model="model" OnValidSubmit="SaveAsync">
             <DataAnnotationsValidator />
-            <ValidationSummary />
                 <div class="mb-2">
                     <label>Name</label>
                     <InputText class="form-control" @bind-Value="model.Name" />
+                    <ValidationMessage For="@(() => model.Name)" class="validation-message"/>
                 </div>
 
                 <div class="mb-2">

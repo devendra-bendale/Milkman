@@ -21,11 +21,11 @@
     <div class="card-body">
         <EditForm Model="model" OnValidSubmit="SaveAsync">
             <DataAnnotationsValidator />
-            <ValidationSummary />
 
             <div class="mb-2">
                 <label>Name</label>
                 <InputText class="form-control" @bind-Value="model.Name" />
+                <ValidationMessage For="() => model.Name" class="validation-message" />
             </div>
 
             <div class="mb-2">
@@ -47,7 +47,6 @@
                         <option value="@m.Id">@m.TypeName</option>
                     }
                 </InputSelect>
-                <ValidationMessage For="@(() => newOrder.MilkTypeId)" />
             </div>
             <div class="mb-2" style="display:none">
                 <label>Delivery Frequency</label>
@@ -57,7 +56,6 @@
                         <option value="@f">@f</option>
                     }
                 </InputSelect>
-                <ValidationMessage For="@(() => newOrder.Frequency)" />
             </div>
             <div class="mb-2">
                 <label>Quantity</label>

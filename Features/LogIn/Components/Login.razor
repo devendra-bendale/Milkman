@@ -40,8 +40,8 @@
                 <ValidationMessage For="() => loginRequestDto.Password" class="validation-message" />
         </div>
         <p class="validation-message">@loginErrorMessage</p>
-        <button class="btn btn-login w-100">
-            SIGN IN
+        <button class="btn btn-login w-100" disabled="@isDisabled">
+            @(isDisabled ? "Please wait.." : "SIGN IN")
         </button>
         </EditForm>
     </div>
@@ -51,20 +51,23 @@
 @code {
     private LoginRequestDto loginRequestDto = new();
     private string loginErrorMessage = string.Empty;
+    private bool isDisabled;
 
     private async Task LogInUser()
     {
+        isDisabled = true;
         var response = await LogInService.ValidateUserCredentials(loginRequestDto.UserName, loginRequestDto.Password);
         if (response != null)
         {
             var loginUser = new LoggedInUser(response.Id, response.FullName, response.IsPreOrderApplicable);
             var loginResponse = new LoginResponseDto(loginUser, "");
             customAuthenticationStateProvider.Login(loginResponse);
-
+            isDisabled = false;
             navigationManager.NavigateTo("/", replace: true);
         }
         else
         {
+            isDisabled = false;
             loginErrorMessage = "Invalid username or password. Please try again.";
         }
     }
@@ -224,21 +227,7 @@
             font-weight: bold;
         }
 
-    .validation-message {
-        display: block;
-        color: #dc3545;
-        font-size: 0.85rem;
-        margin-top: 4px;
-        margin-left: 20px;
-        font-weight: 500;
-    }
-
-    .input-validation-error,
-    .invalid {
-        border: none;
-        border-radius: 40px;
-        overflow: hidden;
-    }
+    
 
         .login-input.invalid .form-control {
             border: none;

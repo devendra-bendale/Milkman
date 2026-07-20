@@ -9,11 +9,10 @@
     <div class="card-body">
         <EditForm Model="newMilkType" OnValidSubmit="AddMilkTypeAsync">
             <DataAnnotationsValidator />
-            <ValidationSummary />
-
             <div class="mb-3">
                 <label class="form-label">Milk Type</label>
                 <InputText class="form-control" @bind-Value="newMilkType.TypeName" />
+                <ValidationMessage For="() => newMilkType.TypeName" class="validation-message" />
             </div>
 
             <div class="row">

@@ -29,7 +29,7 @@
                     <option value="@s.Id">@s.Name</option>
                 }
             </InputSelect>
-            <ValidationMessage For="@(() => newOrder.SupplierId)" />
+            <ValidationMessage For="@(() => newOrder.SupplierId)" class="validation-message"/>
         </div>
         <div class="mb-2">
             <label>Milk Type</label>
@@ -40,7 +40,7 @@
                     <option value="@m.Id">@m.TypeName</option>
                 }
             </InputSelect>
-            <ValidationMessage For="@(() => newOrder.MilkTypeId)" />
+            <ValidationMessage For="@(() => newOrder.MilkTypeId)" class="validation-message"/>
         </div>
         <div class="mb-2">
             <InputRadioGroup @bind-Value="newOrder.IsMorningOrder" TValue="bool">

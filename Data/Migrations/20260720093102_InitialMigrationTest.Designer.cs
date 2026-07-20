@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Milkman2.Data.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20260702040147_FatsAdded")]
-    partial class FatsAdded
+    [Migration("20260720093102_InitialMigrationTest")]
+    partial class InitialMigrationTest
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -56,7 +56,7 @@ namespace Milkman2.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Customers");
+                    b.ToTable("Customer", "milkman");
                 });
 
             modelBuilder.Entity("Milkman2.Data.Models.CustomerAttendance", b =>
@@ -83,7 +83,7 @@ namespace Milkman2.Data.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.ToTable("CustomerAttendances");
+                    b.ToTable("CustomerAttendance", "milkman");
                 });
 
             modelBuilder.Entity("Milkman2.Data.Models.CustomerDailyEntry", b =>
@@ -120,7 +120,7 @@ namespace Milkman2.Data.Migrations
 
                     b.HasIndex("MilkTypeId");
 
-                    b.ToTable("CustomerDailyEntries");
+                    b.ToTable("CustomerDailyEntry", "milkman");
                 });
 
             modelBuilder.Entity("Milkman2.Data.Models.MilkType", b =>
@@ -151,7 +151,7 @@ namespace Milkman2.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("MilkTypes");
+                    b.ToTable("MilkType", "milkman");
                 });
 
             modelBuilder.Entity("Milkman2.Data.Models.PurchaseOrder", b =>
@@ -195,7 +195,7 @@ namespace Milkman2.Data.Migrations
 
                     b.HasIndex("SupplierId");
 
-                    b.ToTable("PurchaseOrders");
+                    b.ToTable("PurchaseOrder", "milkman");
                 });
 
             modelBuilder.Entity("Milkman2.Data.Models.SalesOrder", b =>
@@ -235,7 +235,7 @@ namespace Milkman2.Data.Migrations
 
                     b.HasIndex("MilkTypeId");
 
-                    b.ToTable("SalesOrders");
+                    b.ToTable("SalesOrder", "milkman");
                 });
 
             modelBuilder.Entity("Milkman2.Data.Models.Supplier", b =>
@@ -265,7 +265,7 @@ namespace Milkman2.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Suppliers");
+                    b.ToTable("Supplier", "milkman");
                 });
 
             modelBuilder.Entity("Milkman2.Data.Models.UserAccount", b =>
@@ -287,6 +287,9 @@ namespace Milkman2.Data.Migrations
                     b.Property<bool>("IsPasswordActivated")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsPreOrderApplicable")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("UserName")
                         .IsRequired()
                         .HasMaxLength(10)
@@ -299,7 +302,7 @@ namespace Milkman2.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("UserAccounts");
+                    b.ToTable("UserAccount", "milkman");
                 });
 
             modelBuilder.Entity("Milkman2.Data.Models.Customer", b =>
